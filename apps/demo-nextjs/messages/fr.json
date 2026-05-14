@@ -1,0 +1,15 @@
+{
+  "home": {
+    "title": "Bienvenue dans la démo Translify",
+    "description": "Cette démo montre Translify fonctionnant avec un projet Next.js + next-intl.",
+    "cta": "Commencer"
+  },
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos",
+    "contact": "Contact"
+  },
+  "footer": {
+    "copyright": "© 2024 Démo Translify"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "home": {
+    "title": "Welcome to Translify Demo",
+    "description": "This demo shows Translify working with a Next.js + next-intl project.",
+    "cta": "Get Started"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "footer": {
+    "copyright": "© 2024 Translify Demo"
+  }
+}

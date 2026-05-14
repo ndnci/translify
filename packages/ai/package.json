@@ -1,0 +1,53 @@
+{
+  "name": "@ndnci/translify-ai",
+  "version": "0.1.0",
+  "description": "AI translation providers for the Translify i18n toolkit",
+  "keywords": [
+    "i18n",
+    "translify",
+    "ai",
+    "openai",
+    "translation"
+  ],
+  "homepage": "https://translify.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ndnci/translify.git",
+    "directory": "packages/ai"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@ndnci/translify-config": "workspace:*",
+    "@ndnci/translify-shared": "workspace:*",
+    "openai": "^4.77.0"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

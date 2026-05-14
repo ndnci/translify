@@ -1,0 +1,69 @@
+{
+  "name": "@ndnci/translify",
+  "version": "0.1.0",
+  "description": "Intelligent i18n CLI — extract, sync, detect, and translate your app",
+  "keywords": [
+    "i18n",
+    "cli",
+    "translation",
+    "internationalisation",
+    "internationalization",
+    "localization",
+    "next-intl",
+    "i18next",
+    "react",
+    "nextjs"
+  ],
+  "homepage": "https://translify.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ndnci/translify.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "translify": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./config": {
+      "import": "./dist/config-entry.js",
+      "require": "./dist/config-entry.cjs",
+      "types": "./dist/config-entry.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@ndnci/translify-ai": "workspace:*",
+    "@ndnci/translify-config": "workspace:*",
+    "@ndnci/translify-core": "workspace:*",
+    "@ndnci/translify-shared": "workspace:*",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

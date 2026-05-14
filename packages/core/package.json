@@ -1,0 +1,56 @@
+{
+  "name": "@ndnci/translify-core",
+  "version": "0.1.0",
+  "description": "Core i18n logic for Translify — scanning, parsing, extraction, sync, and detection",
+  "keywords": [
+    "i18n",
+    "translify",
+    "core",
+    "extraction",
+    "ast"
+  ],
+  "homepage": "https://translify.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ndnci/translify.git",
+    "directory": "packages/core"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.26.2",
+    "@babel/traverse": "^7.26.4",
+    "@babel/types": "^7.26.3",
+    "@ndnci/translify-shared": "workspace:*",
+    "fast-glob": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/babel__traverse": "^7.20.6",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

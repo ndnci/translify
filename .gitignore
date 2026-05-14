@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist
+build
+out
+
+# Turbo
+.turbo
+
+# Testing
+coverage
+*.lcov
+
+# Next.js
+.next
+.vercel
+
+# VitePress
+.vitepress/cache
+.vitepress/dist
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+*.suo
+*.user
+
+# IDE
+.vscode
+.idea
+*.sw?
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.cache

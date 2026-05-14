@@ -1,0 +1,10 @@
+export { registerInitCommand } from './init.js';
+export { registerExtractCommand } from './extract.js';
+export { registerSyncCommand } from './sync.js';
+export { registerTranslateCommand } from './translate.js';
+export { registerUnusedCommand } from './unused.js';
+export { registerMissingCommand } from './missing.js';
+export { registerDuplicateCommand } from './duplicate.js';
+export { registerOptimizeCommand } from './optimize.js';
+export { registerAuditCommand } from './audit.js';
+export { registerDoctorCommand } from './doctor.js';
