@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Intelligent i18n CLI — extract, sync, detect, and translate your app",
   "keywords": [
     "i18n",

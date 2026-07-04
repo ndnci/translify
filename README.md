@@ -3,6 +3,9 @@
   <p><strong>Intelligent i18n CLI — extract, sync, detect, translate.</strong></p>
   <p>Automate your entire internationalization workflow from a single terminal command.</p>
 
+  <a href="https://ndnci.github.io/translify/">
+    <img alt="Documentation" src="https://img.shields.io/badge/docs-ndnci.github.io%2Ftranslify-0070f3?style=flat-square" />
+  </a>
   <a href="https://www.npmjs.com/package/@ndnci/translify">
     <img alt="npm version" src="https://img.shields.io/npm/v/@ndnci/translify?style=flat-square&color=0070f3" />
   </a>
