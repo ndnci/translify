@@ -16,6 +16,19 @@ export default defineConfig([
       '@ndnci/translify-core',
       '@ndnci/translify-ai',
     ],
+    // Third-party deps pulled in transitively by the bundled workspace
+    // packages above must stay external: several (fast-glob, jiti) are CJS
+    // modules with dynamic `require()` calls to Node builtins that esbuild
+    // can't translate when bundling into ESM output.
+    external: [
+      '@babel/parser',
+      '@babel/traverse',
+      '@babel/types',
+      'fast-glob',
+      'jiti',
+      'openai',
+      'zod',
+    ],
   },
   // Re-export defineConfig for `@ndnci/translify/config` import path
   {

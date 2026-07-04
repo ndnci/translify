@@ -13,6 +13,7 @@ import {
   registerOptimizeCommand,
   registerAuditCommand,
   registerDoctorCommand,
+  registerUpgradeCommand,
 } from './commands/index.js';
 
 export function createCli(): Command {
@@ -47,6 +48,7 @@ ${c.dim('Commands:')}
   ${c.brand('optimize')}    Optimize and format translation files
   ${c.brand('audit')}       Full i18n health audit
   ${c.brand('doctor')}      Check setup and environment
+  ${c.brand('upgrade')}     Update the CLI to the latest version
 
 ${c.dim('Examples:')}
   ${c.dim('$')} translify init
@@ -74,6 +76,7 @@ ${c.dim('Documentation:')} https://ndnci.github.io/translify/
   registerOptimizeCommand(program, getLogger());
   registerAuditCommand(program, getLogger());
   registerDoctorCommand(program, getLogger());
+  registerUpgradeCommand(program, getLogger());
 
   return program;
 }
