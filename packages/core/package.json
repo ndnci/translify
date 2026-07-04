@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify-core",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Core i18n logic for Translify — scanning, parsing, extraction, sync, and detection",
   "keywords": [
     "i18n",

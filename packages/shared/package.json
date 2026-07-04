@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify-shared",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Shared types, utilities, and constants for the Translify i18n toolkit",
   "keywords": [
     "i18n",
