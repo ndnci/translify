@@ -27,13 +27,13 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./config": {
+      "types": "./dist/config-entry.d.ts",
       "import": "./dist/config-entry.js",
-      "require": "./dist/config-entry.cjs",
-      "types": "./dist/config-entry.d.ts"
+      "require": "./dist/config-entry.cjs"
     }
   },
   "files": [

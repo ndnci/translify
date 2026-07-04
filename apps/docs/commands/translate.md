@@ -45,4 +45,5 @@ Currently supported:
 
 - [OpenAI](/providers/openai) (GPT-4.1-mini, GPT-4.1, etc.)
 
-More providers planned — see [contributing](/contributing/guide).
+More providers planned — see
+[contributing](https://github.com/ndnci/translify/blob/main/CONTRIBUTING.md).

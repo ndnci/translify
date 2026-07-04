@@ -34,19 +34,19 @@ check-publish-%:
 	@bash scripts/check-publish.sh $*
 
 npm-publish: check-publish-latest    ## Build and publish $(PACKAGE) as stable (tag: latest)
-	pnpm turbo build
+	pnpm turbo build --filter="$(PACKAGE)..."
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks
 
 npm-publish-alpha: check-publish-alpha ## Build and publish $(PACKAGE) as pre-release (tag: alpha)
-	pnpm turbo build
+	pnpm turbo build --filter="$(PACKAGE)..."
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag alpha
 
 npm-publish-beta: check-publish-beta  ## Build and publish $(PACKAGE) as pre-release (tag: beta)
-	pnpm turbo build
+	pnpm turbo build --filter="$(PACKAGE)..."
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag beta
 
 npm-publish-rc: check-publish-rc      ## Build and publish $(PACKAGE) as release candidate (tag: rc)
-	pnpm turbo build
+	pnpm turbo build --filter="$(PACKAGE)..."
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag rc
 
 # ── Help ──────────────────────────────────────────────────────────────────────
