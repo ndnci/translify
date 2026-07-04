@@ -1,6 +1,7 @@
 {
   "name": "@ndnci/translify-config",
   "version": "0.0.1",
+  "private": true,
   "description": "Config loading and validation for the Translify i18n toolkit",
   "keywords": [
     "i18n",

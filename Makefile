@@ -1,35 +1,46 @@
-.PHONY: build dev lint typecheck test clean changeset version release help
+.PHONY: build dev lint typecheck test clean npm-publish npm-publish-alpha npm-publish-beta npm-publish-rc help
+
+# ── Variables ─────────────────────────────────────────────────────────────────
+PACKAGE := @ndnci/translify
+FILTER  := --filter $(PACKAGE)
 
 # ── Development ───────────────────────────────────────────────────────────────
 
 build:          ## Build all packages
-	pnpm build
+	pnpm turbo build
 
-dev:            ## Start dev mode (watch, parallel)
-	pnpm dev
+dev:            ## Start dev mode (watch)
+	pnpm turbo dev
 
 lint:           ## Lint all packages
-	pnpm lint
+	pnpm turbo lint
 
 typecheck:      ## Type-check all packages
-	pnpm typecheck
+	pnpm turbo typecheck
 
 test:           ## Run tests for all packages
-	pnpm test
+	pnpm turbo test
 
 clean:          ## Remove all dist folders and node_modules
-	pnpm clean:all
+	pnpm turbo clean && rm -rf node_modules
 
-# ── Releasing (Changesets) ───────────────────────────────────────────────────
+# ── Publishing ────────────────────────────────────────────────────────────────
 
-changeset:      ## Create a new changeset for the current changes
-	pnpm changeset
+npm-publish:    ## Build and publish $(PACKAGE) as stable (tag: latest)
+	pnpm turbo build
+	pnpm $(FILTER) publish --access public --provenance --no-git-checks
 
-version:        ## Consume changesets and bump package versions/changelogs
-	pnpm version-packages
+npm-publish-alpha: ## Build and publish $(PACKAGE) as pre-release (tag: alpha)
+	pnpm turbo build
+	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag alpha
 
-release:        ## Build and publish all packages to npm (also runs via CI on tag push)
-	pnpm release
+npm-publish-beta:  ## Build and publish $(PACKAGE) as pre-release (tag: beta)
+	pnpm turbo build
+	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag beta
+
+npm-publish-rc:    ## Build and publish $(PACKAGE) as release candidate (tag: rc)
+	pnpm turbo build
+	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag rc
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 
