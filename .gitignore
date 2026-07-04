@@ -54,3 +54,6 @@ Thumbs.db
 # Misc
 .cache
 cache
+
+# Copied at publish time (see packages/cli/package.json prepack/postpack)
+packages/cli/README.md
