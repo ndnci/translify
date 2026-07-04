@@ -66,7 +66,7 @@ ${c.dim('Examples:')}
     )
     .action(async (opts: { force?: boolean }) => {
       const cwd = program.opts<{ cwd: string }>().cwd ?? process.cwd();
-      await runInit({ cwd, force: opts.force }, logger);
+      await runInit({ cwd, ...(opts.force !== undefined && { force: opts.force }) }, logger);
     });
 }
 

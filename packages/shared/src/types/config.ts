@@ -6,7 +6,7 @@ import {
   DEFAULT_SOURCE_INCLUDE,
   DEFAULT_SOURCE_EXCLUDE,
   DEFAULT_TRANSLATION_FILES,
-} from '@ndnci/translify-shared';
+} from '../constants/index.js';
 
 // ─── Source ────────────────────────────────────────────────────────────────────
 

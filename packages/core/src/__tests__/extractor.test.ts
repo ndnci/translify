@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { parseSource } from '../parser/babel-parser.js';
 import { extractFromFile } from '../extractor/text-extractor.js';
 import { join } from 'node:path';

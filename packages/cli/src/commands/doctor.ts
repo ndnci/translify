@@ -24,7 +24,7 @@ ${c.dim('Examples:')}
       logger.spacer();
       process.stdout.write(`${c.brand('▸')} ${c.bold('Translify Doctor')}\n\n`);
 
-      const checks: Array<{ label: string; pass: boolean; detail?: string }> = [];
+      const checks: Array<{ label: string; pass: boolean; detail?: string | undefined }> = [];
 
       // ── Node.js version ──────────────────────────────────────────────────
       const nodeVersion = process.versions.node;
@@ -38,7 +38,6 @@ ${c.dim('Examples:')}
       // ── Config file ──────────────────────────────────────────────────────
       let configFound = false;
       let translationFilesOk = false;
-      let configDetail: string | undefined;
 
       try {
         const resolved = resolveConfigPath(cwd, configPath);
@@ -49,7 +48,7 @@ ${c.dim('Examples:')}
         });
 
         // Load and validate config
-        const { config } = await resolveConfig({ cwd, configPath });
+        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
 
         // ── Translation files ────────────────────────────────────────────
         const translationPaths = await scanTranslationFiles(config, cwd);

@@ -1,7 +1,6 @@
 import type { Command } from 'commander';
 import { resolveConfig } from '@ndnci/translify-config';
 import { scanFromConfig, extractFromFiles, mergeExtractedKeys } from '@ndnci/translify-core';
-import { relativePath } from '@ndnci/translify-shared';
 import type { CliLogger } from '../ui/logger.js';
 import { createSpinner } from '../ui/spinner.js';
 import { c } from '../ui/colors.js';
@@ -24,7 +23,6 @@ ${c.dim('Examples:')}
       const {
         cwd,
         config: configPath,
-        dryRun,
         verbose,
       } = program.opts<{
         cwd: string;
@@ -36,7 +34,7 @@ ${c.dim('Examples:')}
       const spinner = createSpinner('Loading config…');
 
       try {
-        const { config } = await resolveConfig({ cwd, configPath });
+        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
         spinner.update('Scanning source files…');
 
         const scan = await scanFromConfig(config, cwd);

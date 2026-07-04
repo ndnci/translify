@@ -37,7 +37,7 @@ export class OpenAIProvider extends BaseTranslationProvider {
     this.temperature = options.temperature ?? 0;
   }
 
-  async translate(request: TranslationRequest): Promise<TranslationResponse> {
+  override async translate(request: TranslationRequest): Promise<TranslationResponse> {
     const keyCount = Object.keys(request.entries).length;
     if (keyCount === 0) {
       return { translations: {}, provider: this.name };
@@ -81,7 +81,11 @@ export class OpenAIProvider extends BaseTranslationProvider {
         this.throwProviderError(`Translation response is missing keys: ${missing.join(', ')}`);
       }
 
-      return { translations, provider: this.name, tokensUsed };
+      return {
+        translations,
+        provider: this.name,
+        ...(tokensUsed !== undefined && { tokensUsed }),
+      };
     } catch (cause) {
       if (cause instanceof Error && cause.name === 'AIProviderError') throw cause;
       this.throwProviderError(
@@ -91,7 +95,7 @@ export class OpenAIProvider extends BaseTranslationProvider {
     }
   }
 
-  async healthCheck(): Promise<void> {
+  override async healthCheck(): Promise<void> {
     try {
       await this.client.models.list();
     } catch (cause) {

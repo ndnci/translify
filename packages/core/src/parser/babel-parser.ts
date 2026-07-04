@@ -72,8 +72,10 @@ function getExtension(filePath: string): SupportedExtension {
   return '.js';
 }
 
-function getPluginsForExtension(ext: SupportedExtension): Parameters<typeof parse>[1]['plugins'] {
-  const base: Parameters<typeof parse>[1]['plugins'] = [
+function getPluginsForExtension(
+  ext: SupportedExtension,
+): NonNullable<NonNullable<Parameters<typeof parse>[1]>['plugins']> {
+  const base: NonNullable<NonNullable<Parameters<typeof parse>[1]>['plugins']> = [
     'optionalChaining',
     'nullishCoalescingOperator',
     'classProperties',

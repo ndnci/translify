@@ -5,7 +5,6 @@ import {
   loadTranslationFile,
   detectDuplicateValues,
 } from '@ndnci/translify-core';
-import { relativePath } from '@ndnci/translify-shared';
 import type { CliLogger } from '../ui/logger.js';
 import { createSpinner } from '../ui/spinner.js';
 import { c } from '../ui/colors.js';
@@ -30,7 +29,7 @@ ${c.dim('Examples:')}
       const spinner = createSpinner('Scanning translation files…');
 
       try {
-        const { config } = await resolveConfig({ cwd, configPath });
+        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
         const translationPaths = await scanTranslationFiles(config, cwd);
         const translationFiles = translationPaths.map(loadTranslationFile);
         const duplicates = detectDuplicateValues(translationFiles);

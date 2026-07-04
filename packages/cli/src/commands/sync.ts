@@ -43,7 +43,7 @@ ${c.dim('Examples:')}
       const spinner = createSpinner('Loading config…');
 
       try {
-        const { config } = await resolveConfig({ cwd, configPath });
+        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
         spinner.update('Scanning files…');
 
         const [scan, translationPaths] = await Promise.all([
@@ -79,7 +79,7 @@ ${c.dim('Examples:')}
           extractedKeys,
           files: translationFiles,
           defaultLanguage: config.translations.default_language,
-          useEmptyForMissing: opts.empty,
+          ...(opts.empty !== undefined && { useEmptyForMissing: opts.empty }),
           dryRun,
         });
 

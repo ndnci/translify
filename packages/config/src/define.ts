@@ -1,4 +1,4 @@
-import type { TranslifyConfigInput } from './schema.js';
+import type { TranslifyConfigInput } from '@ndnci/translify-shared';
 
 /**
  * Type-safe helper for defining a Translify config.

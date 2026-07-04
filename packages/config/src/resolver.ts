@@ -2,8 +2,8 @@ import {
   TranslifyConfigSchema,
   type TranslifyConfig,
   type TranslifyConfigInput,
-} from './schema.js';
-import { ConfigValidationError } from '@ndnci/translify-shared';
+  ConfigValidationError,
+} from '@ndnci/translify-shared';
 import { resolveConfigPath, loadRawConfig, type ResolvedConfigPath } from './loader.js';
 
 export interface ResolveOptions {

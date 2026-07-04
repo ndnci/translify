@@ -1,5 +1,4 @@
 import fg from 'fast-glob';
-import { resolve } from 'node:path';
 import type { TranslifyConfig } from '@ndnci/translify-shared';
 
 export interface ScanOptions {

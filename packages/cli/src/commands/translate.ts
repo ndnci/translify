@@ -39,7 +39,7 @@ ${c.dim('Examples:')}
       const spinner = createSpinner('Loading config…');
 
       try {
-        const { config } = await resolveConfig({ cwd, configPath });
+        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
 
         if (!config.ai_translation.enabled) {
           spinner.fail('AI translation is disabled');
@@ -65,7 +65,7 @@ ${c.dim('Examples:')}
         const results = await translateMissingKeys(provider, {
           files: translationFiles,
           defaultLanguage: config.translations.default_language,
-          targetLanguages: targetLocales,
+          ...(targetLocales && { targetLanguages: targetLocales }),
           onlyMissing: !opts.all,
           batchSize: config.ai_translation.batch_size,
           dryRun,

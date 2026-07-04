@@ -1,4 +1,4 @@
-import { type TranslationRecord, type TranslationValue } from '../types/index.js';
+import type { TranslationRecord, TranslationValue } from '../types/index.js';
 
 /**
  * Flattens a nested translation object into dot-notation keys.

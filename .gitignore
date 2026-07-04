@@ -18,6 +18,7 @@ coverage
 # Next.js
 .next
 .vercel
+next-env.d.ts
 
 # VitePress
 .vitepress/cache
@@ -52,3 +53,4 @@ Thumbs.db
 
 # Misc
 .cache
+cache

@@ -3,7 +3,7 @@ import {
   flattenTranslations,
   unflattenTranslations,
 } from '@ndnci/translify-shared';
-import { type BaseTranslationProvider } from './providers/base-provider.js';
+import type { BaseTranslationProvider } from './providers/base-provider.js';
 import { OpenAIProvider } from './providers/openai-provider.js';
 import type { TranslifyConfig } from '@ndnci/translify-config';
 import { writeFileSync } from 'node:fs';

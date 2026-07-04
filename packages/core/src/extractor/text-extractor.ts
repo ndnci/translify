@@ -1,5 +1,10 @@
 import _traverse from '@babel/traverse';
-import type { File, StringLiteral, TemplateLiteral } from '@babel/types';
+import type {
+  Expression,
+  StringLiteral,
+  TemplateLiteral,
+  V8IntrinsicIdentifier,
+} from '@babel/types';
 import {
   type ExtractionEntry,
   type ExtractionResult,
@@ -142,7 +147,7 @@ function parseFunctionSpec(spec: string): ParsedFunctionSpec {
 }
 
 function matchesCallee(
-  callee: import('@babel/types').Expression | import('@babel/types').V8IntrinsicIdentifier,
+  callee: Expression | V8IntrinsicIdentifier,
   fn: ParsedFunctionSpec,
 ): boolean {
   if (fn.type === 'identifier') {

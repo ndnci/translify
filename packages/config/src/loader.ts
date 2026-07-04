@@ -5,8 +5,8 @@ import {
   CONFIG_SEARCH_DIRS,
   ConfigNotFoundError,
   ConfigError,
+  type TranslifyConfigInput,
 } from '@ndnci/translify-shared';
-import type { TranslifyConfigInput } from './schema.js';
 
 export interface ResolvedConfigPath {
   path: string;

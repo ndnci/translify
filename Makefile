@@ -1,4 +1,4 @@
-.PHONY: build dev lint typecheck test clean npm-publish npm-publish-alpha npm-publish-beta npm-publish-rc help
+.PHONY: build dev lint typecheck test clean check-publish-% npm-publish npm-publish-alpha npm-publish-beta npm-publish-rc help
 
 # ── Variables ─────────────────────────────────────────────────────────────────
 PACKAGE := @ndnci/translify
@@ -25,20 +25,27 @@ clean:          ## Remove all dist folders and node_modules
 	pnpm turbo clean && rm -rf node_modules
 
 # ── Publishing ────────────────────────────────────────────────────────────────
+# Each target runs scripts/check-publish.sh first: it verifies the version in
+# packages/cli/package.json matches the channel (e.g. alpha needs a -alpha.N
+# version), isn't already published, that build/typecheck/lint/test all pass,
+# and that you're logged in to npm — before anything is actually published.
 
-npm-publish:    ## Build and publish $(PACKAGE) as stable (tag: latest)
+check-publish-%:
+	@bash scripts/check-publish.sh $*
+
+npm-publish: check-publish-latest    ## Build and publish $(PACKAGE) as stable (tag: latest)
 	pnpm turbo build
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks
 
-npm-publish-alpha: ## Build and publish $(PACKAGE) as pre-release (tag: alpha)
+npm-publish-alpha: check-publish-alpha ## Build and publish $(PACKAGE) as pre-release (tag: alpha)
 	pnpm turbo build
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag alpha
 
-npm-publish-beta:  ## Build and publish $(PACKAGE) as pre-release (tag: beta)
+npm-publish-beta: check-publish-beta  ## Build and publish $(PACKAGE) as pre-release (tag: beta)
 	pnpm turbo build
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag beta
 
-npm-publish-rc:    ## Build and publish $(PACKAGE) as release candidate (tag: rc)
+npm-publish-rc: check-publish-rc      ## Build and publish $(PACKAGE) as release candidate (tag: rc)
 	pnpm turbo build
 	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag rc
 

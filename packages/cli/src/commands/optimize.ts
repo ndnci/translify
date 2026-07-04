@@ -38,7 +38,7 @@ ${c.dim('Examples:')}
       const spinner = createSpinner('Loading translation files…');
 
       try {
-        const { config } = await resolveConfig({ cwd, configPath });
+        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
         const translationPaths = await scanTranslationFiles(config, cwd);
         const translationFiles = translationPaths.map(loadTranslationFile);
 

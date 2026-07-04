@@ -5,7 +5,7 @@ export class TranslifyError extends Error {
   constructor(
     code: string,
     message: string,
-    public readonly cause?: unknown,
+    public override readonly cause?: unknown,
   ) {
     super(message);
     this.name = 'TranslifyError';

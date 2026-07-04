@@ -28,11 +28,7 @@ ${c.dim('Examples:')}
 `,
     )
     .action(async () => {
-      const {
-        cwd,
-        config: configPath,
-        verbose,
-      } = program.opts<{
+      const { cwd, config: configPath } = program.opts<{
         cwd: string;
         config?: string;
         verbose: boolean;
@@ -41,7 +37,7 @@ ${c.dim('Examples:')}
       const spinner = createSpinner('Running audit…');
 
       try {
-        const { config } = await resolveConfig({ cwd, configPath });
+        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
 
         const [scan, translationPaths] = await Promise.all([
           scanFromConfig(config, cwd),

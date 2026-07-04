@@ -8,7 +8,7 @@ the project, run tests, and submit a pull request.
 ## Prerequisites
 
 - Node.js **22+**
-- pnpm **9+**
+- pnpm **10+**
 - Git
 
 ---
@@ -115,6 +115,41 @@ Follow the prompts. This generates a changelog entry that will be included in
 the next release.
 
 ---
+
+## Releasing
+
+Only `@ndnci/translify` (the CLI) is published to npm — the other packages
+(`shared`, `config`, `core`, `ai`) are internal (`"private": true"`) and are
+only versioned for internal dependency tracking.
+
+### Automated (CI)
+
+Pushing a tag matching `v*` triggers
+[`.github/workflows/publish.yml`](.github/workflows/publish.yml), which builds,
+tests, and runs `pnpm changeset publish`. Authentication uses **npm Trusted
+Publishing (OIDC)** — no `NPM_TOKEN` secret is required. This must be configured
+once per package on npmjs.com:
+
+1. Go to the
+   [`@ndnci/translify` package settings](https://www.npmjs.com/package/@ndnci/translify/access)
+   → **Trusted Publisher**.
+2. Select **GitHub Actions** and set:
+   - Organization/repository: `ndnci/translify`
+   - Workflow filename: `publish.yml` (just the filename, not the full path)
+3. Save. The workflow's `permissions: id-token: write` handles the rest.
+
+### Manual (local)
+
+For a one-off publish without going through CI, use the `Makefile` (requires
+`npm login`/`pnpm login` with an account that has publish rights — Trusted
+Publishing only applies to the GitHub Actions workflow, not local publishes):
+
+```bash
+make npm-publish          # stable release (tag: latest)
+make npm-publish-alpha    # pre-release (tag: alpha)
+make npm-publish-beta     # pre-release (tag: beta)
+make npm-publish-rc       # release candidate (tag: rc)
+```
 
 ## Adding a New Parser
 
