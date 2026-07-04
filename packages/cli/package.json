@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Intelligent i18n CLI — extract, sync, detect, and translate your app",
   "keywords": [
     "i18n",
@@ -14,7 +14,7 @@
     "react",
     "nextjs"
   ],
-  "homepage": "https://translify.dev",
+  "homepage": "https://ndnci.github.io/translify/",
   "repository": {
     "type": "git",
     "url": "https://github.com/ndnci/translify.git",

@@ -4,6 +4,7 @@ export default defineConfig({
   title: 'Translify',
   description: 'Intelligent i18n CLI — extract, sync, detect, and translate your app',
   lang: 'en-US',
+  base: '/translify/',
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],

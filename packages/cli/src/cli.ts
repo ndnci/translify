@@ -54,7 +54,7 @@ ${c.dim('Examples:')}
   ${c.dim('$')} translify sync --dry-run
   ${c.dim('$')} translify audit --config ./config/translify.config.ts
 
-${c.dim('Documentation:')} https://translify.dev
+${c.dim('Documentation:')} https://ndnci.github.io/translify/
 `,
     );
 
