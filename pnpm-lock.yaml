@@ -121,6 +121,16 @@ importers:
 
   packages/cli:
     dependencies:
+      chalk:
+        specifier: ^5.4.1
+        version: 5.6.2
+      commander:
+        specifier: ^13.1.0
+        version: 13.1.0
+      ora:
+        specifier: ^8.1.1
+        version: 8.2.0
+    devDependencies:
       '@ndnci/translify-ai':
         specifier: workspace:*
         version: link:../ai
@@ -133,16 +143,6 @@ importers:
       '@ndnci/translify-shared':
         specifier: workspace:*
         version: link:../shared
-      chalk:
-        specifier: ^5.4.1
-        version: 5.6.2
-      commander:
-        specifier: ^13.1.0
-        version: 13.1.0
-      ora:
-        specifier: ^8.1.1
-        version: 8.2.0
-    devDependencies:
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.19

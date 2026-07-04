@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Intelligent i18n CLI — extract, sync, detect, and translate your app",
   "keywords": [
     "i18n",
@@ -51,15 +51,15 @@
     "postpack": "rm -f ./README.md"
   },
   "dependencies": {
-    "@ndnci/translify-ai": "workspace:*",
-    "@ndnci/translify-config": "workspace:*",
-    "@ndnci/translify-core": "workspace:*",
-    "@ndnci/translify-shared": "workspace:*",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "ora": "^8.1.1"
   },
   "devDependencies": {
+    "@ndnci/translify-ai": "workspace:*",
+    "@ndnci/translify-config": "workspace:*",
+    "@ndnci/translify-core": "workspace:*",
+    "@ndnci/translify-shared": "workspace:*",
     "@types/node": "^22.10.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.3.5",
