@@ -1,4 +1,6 @@
-# `translify unused`
+# `translify check-unused`
+
+> Formerly `translify unused` — the old name still works but is deprecated.
 
 Detect translation keys that are defined in your JSON files but never referenced
 in source code.
@@ -6,8 +8,9 @@ in source code.
 ## Usage
 
 ```bash
-translify unused
-translify unused --verbose
+translify check-unused
+translify check-unused --verbose
+translify check-unused --output report.json
 ```
 
 ## Example output
@@ -26,6 +29,12 @@ translify unused --verbose
     ⚠ old.navbar.home          "Accueil"
     ⚠ deprecated.footer.link   "Politique de confidentialité"
 ```
+
+## Options
+
+| Option            | Description                                        |
+| ----------------- | -------------------------------------------------- |
+| `--output <file>` | Write the report to a file (`.json` or plain text) |
 
 ## Exit code
 

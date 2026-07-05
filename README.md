@@ -28,10 +28,10 @@
 **Translify** is a professional, framework-agnostic CLI that automates the
 hardest parts of i18n:
 
-- **Extract** all translation keys used in your source code
-- **Sync** translation files across languages — add missing keys, remove stale
-  ones
-- **Detect** unused, missing, and duplicate translation entries
+- **Add missing keys** to translation files across languages, preserving
+  existing formatting
+- **Detect** unused, missing, duplicate, and cross-locale inconsistent
+  translation entries
 - **Translate** automatically via AI providers (OpenAI GPT-4)
 - **Audit** your entire i18n health in one command
 - **Optimize** translation files (sort, deduplicate, format)
@@ -59,39 +59,32 @@ translify init
 Creates a `translify.config.ts` in your project root with full TypeScript
 autocompletion.
 
-### Extract translation keys
-
-```bash
-translify extract
-```
-
-Scans your source files for all `t()`, `i18n.t()`, `translate()` calls and
-reports which keys are in use.
-
-### Sync translation files
-
-```bash
-translify sync
-```
-
-Adds missing keys to all language files, keeping them in sync with your base
-language.
-
-### Find unused keys
-
-```bash
-translify unused
-```
-
-Finds translation keys defined in your JSON files but never referenced in code.
-
 ### Run a full audit
 
 ```bash
 translify audit
 ```
 
-Runs all checks (missing, unused, duplicates) in one pass — great for CI.
+Runs every check (missing, unused, duplicate values, duplicate keys,
+cross-locale inconsistencies) in one pass — great for CI.
+
+### Add missing keys
+
+```bash
+translify add-missing --dry-run
+translify add-missing
+```
+
+Adds missing keys to all language files, keeping them in sync with your base
+language, without touching the existing formatting of each file.
+
+### Find unused keys
+
+```bash
+translify check-unused
+```
+
+Finds translation keys defined in your JSON files but never referenced in code.
 
 ---
 
@@ -115,6 +108,7 @@ export default defineConfig({
 
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
+    namespace_functions: ['useTranslations', 'getTranslations'],
     ignored_words: ['OK', 'API'],
     ignored_patterns: ['^v[0-9]+$'],
   },
@@ -133,18 +127,22 @@ export default defineConfig({
 
 ## Commands
 
-| Command               | Description                                   |
-| --------------------- | --------------------------------------------- |
-| `translify init`      | Initialize a config file                      |
-| `translify extract`   | Extract all translation keys from source code |
-| `translify sync`      | Sync translation files across languages       |
-| `translify translate` | Auto-translate missing keys via AI            |
-| `translify unused`    | Detect unused translation keys                |
-| `translify missing`   | Detect missing translation keys               |
-| `translify duplicate` | Detect duplicate translation values           |
-| `translify optimize`  | Optimize and format translation files         |
-| `translify audit`     | Full i18n audit (all checks combined)         |
-| `translify doctor`    | Check your Translify setup and environment    |
+| Command                       | Description                                               |
+| ----------------------------- | --------------------------------------------------------- |
+| `translify init`              | Initialize a config file                                  |
+| `translify audit`             | Full i18n audit (all checks combined, alias `check-all`)  |
+| `translify add-missing`       | Add missing keys to translation files across languages    |
+| `translify translate`         | Auto-translate missing keys via AI                        |
+| `translify check-missing`     | Detect missing translation keys                           |
+| `translify check-unused`      | Detect unused translation keys                            |
+| `translify check-duplicates`  | Detect duplicate translation values and duplicate keys    |
+| `translify check-consistency` | Detect keys missing in some locales but present in others |
+| `translify optimize`          | Optimize and format translation files                     |
+| `translify doctor`            | Check your Translify setup and environment                |
+
+> `add-missing`, `check-missing`, `check-unused`, and `check-duplicates` were
+> previously named `sync`, `missing`, `unused`, and `duplicate`. The old names
+> still work as deprecated aliases.
 
 ### Global options
 

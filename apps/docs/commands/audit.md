@@ -1,6 +1,6 @@
 # `translify audit`
 
-Run a full i18n health audit — all checks in one pass.
+Run a full i18n health audit — every check in one pass. Alias: `check-all`.
 
 ## Usage
 
@@ -8,15 +8,18 @@ Run a full i18n health audit — all checks in one pass.
 translify audit
 translify audit --verbose
 translify audit --config ./config/translify.config.ts
+translify audit --output report.json
 ```
 
 ## What it checks
 
-| Check            | Description                                           |
-| ---------------- | ----------------------------------------------------- |
-| Missing keys     | Keys used in source but absent from translation files |
-| Unused keys      | Keys in translation files never referenced in code    |
-| Duplicate values | Multiple keys sharing the same translated string      |
+| Check                  | Description                                           |
+| ---------------------- | ----------------------------------------------------- |
+| Missing keys           | Keys used in source but absent from translation files |
+| Unused keys            | Keys in translation files never referenced in code    |
+| Duplicate values       | Multiple keys sharing the same translated string      |
+| Duplicate keys         | The same key declared twice in one raw JSON file      |
+| Locale inconsistencies | A key present in one locale but missing from another  |
 
 ## Example output
 
@@ -29,9 +32,13 @@ translify audit --config ./config/translify.config.ts
   Unique keys used     187
 
 ▸ Checks
-  ✓ Missing keys           none
-  ✗ Unused keys            12
-  ✓ Duplicate values       none
+  Check                   Issues
+  ──────────────────────  ──────
+  Missing keys            0
+  Unused keys             12
+  Duplicate values        0
+  Duplicate keys          0
+  Locale inconsistencies  2
 
 ▸ Unused keys
   ⚠ [en] old.navbar.home
@@ -54,8 +61,9 @@ This makes it safe to use in CI pipelines:
 
 ## Options
 
-| Option         | Description         |
-| -------------- | ------------------- |
-| `-c, --config` | Path to config file |
-| `--cwd`        | Working directory   |
-| `--verbose`    | Show all details    |
+| Option            | Description                                             |
+| ----------------- | ------------------------------------------------------- |
+| `-c, --config`    | Path to config file                                     |
+| `--cwd`           | Working directory                                       |
+| `--verbose`       | Show all details                                        |
+| `--output <file>` | Write the full report to a file (`.json` or plain text) |

@@ -76,3 +76,74 @@ export function Page() {
     expect(titleEntry!.line).toBeGreaterThan(0);
   });
 });
+
+describe('extractFromFile (namespace-aware)', () => {
+  const dir = join(tmpdir(), 'translify-test-ns-' + process.pid);
+  const file = join(dir, 'namespaced.tsx');
+
+  beforeAll(() => {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      file,
+      `
+import { useTranslations, getTranslations } from 'next-intl';
+
+export function ToolPage() {
+  const t = useTranslations("CommonMessage");
+  const label = t("pleaseLogin");
+  const plain = greet("hello");
+  return <div>{label}</div>;
+}
+
+export async function serverFn() {
+  const t = await getTranslations({ namespace: "ServerCommon" });
+  return t("welcome");
+}
+`,
+    );
+  });
+
+  afterAll(() => {
+    unlinkSync(file);
+  });
+
+  it('prefixes keys with the namespace bound via useTranslations', () => {
+    const result = extractFromFile({
+      file,
+      translationFunctions: ['t', 'greet'],
+      namespaceFunctions: ['useTranslations', 'getTranslations'],
+      ignoredWords: [],
+      ignoredPatterns: [],
+    });
+
+    const keys = result.entries.map((e) => e.key);
+    expect(keys).toContain('CommonMessage.pleaseLogin');
+    expect(keys).not.toContain('pleaseLogin');
+  });
+
+  it('prefixes keys with the namespace bound via getTranslations({ namespace })', () => {
+    const result = extractFromFile({
+      file,
+      translationFunctions: ['t'],
+      namespaceFunctions: ['useTranslations', 'getTranslations'],
+      ignoredWords: [],
+      ignoredPatterns: [],
+    });
+
+    const keys = result.entries.map((e) => e.key);
+    expect(keys).toContain('ServerCommon.welcome');
+  });
+
+  it('leaves non-namespaced translation calls unaffected', () => {
+    const result = extractFromFile({
+      file,
+      translationFunctions: ['t', 'greet'],
+      namespaceFunctions: ['useTranslations', 'getTranslations'],
+      ignoredWords: [],
+      ignoredPatterns: [],
+    });
+
+    const keys = result.entries.map((e) => e.key);
+    expect(keys).toContain('hello');
+  });
+});

@@ -55,6 +55,12 @@ export default defineConfig({
     // Function names/expressions to treat as translation calls
     translation_functions: ['t', 'i18n.t', 'translate', '$t'],
 
+    // Namespace-hook functions. A variable bound to one of these calls with a
+    // static namespace prefixes every translation call made through it, e.g.
+    // `const t = useTranslations("CommonMessage")` then `t("save")` extracts
+    // the key `CommonMessage.save` instead of just `save`.
+    namespace_functions: ['useTranslations', 'getTranslations'],
+
     // Exact words to never flag
     ignored_words: ['OK', 'API', 'ID'],
 

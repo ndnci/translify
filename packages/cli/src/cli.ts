@@ -4,12 +4,12 @@ import { createLogger } from './ui/logger.js';
 import { c } from './ui/colors.js';
 import {
   registerInitCommand,
-  registerExtractCommand,
-  registerSyncCommand,
+  registerAddMissingCommand,
   registerTranslateCommand,
-  registerUnusedCommand,
-  registerMissingCommand,
-  registerDuplicateCommand,
+  registerCheckUnusedCommand,
+  registerCheckMissingCommand,
+  registerCheckDuplicatesCommand,
+  registerCheckConsistencyCommand,
   registerOptimizeCommand,
   registerAuditCommand,
   registerDoctorCommand,
@@ -37,26 +37,28 @@ export function createCli(): Command {
     .addHelpText(
       'after',
       `
-${c.dim('Commands:')}
-  ${c.brand('init')}        Initialize a config file
-  ${c.brand('extract')}     Extract translation keys from source
-  ${c.brand('sync')}        Sync translation files across languages
-  ${c.brand('translate')}   Auto-translate via AI
-  ${c.brand('unused')}      Detect unused translation keys
-  ${c.brand('missing')}     Detect missing translation keys
-  ${c.brand('duplicate')}   Detect duplicate translation values
-  ${c.brand('optimize')}    Optimize and format translation files
-  ${c.brand('audit')}       Full i18n health audit
-  ${c.brand('doctor')}      Check setup and environment
-  ${c.brand('upgrade')}     Update the CLI to the latest version
+${c.dim('Checks (read-only):')}
+  ${c.brand('check-missing')}      Keys used in code but missing from translation files
+  ${c.brand('check-unused')}       Keys defined in translation files but unused in code
+  ${c.brand('check-duplicates')}   Duplicate values and duplicate keys in translation files
+  ${c.brand('check-consistency')}  Keys not mirrored across every locale
+  ${c.brand('audit')}              Run every check above in one pass (alias: check-all)
+
+${c.dim('Actions:')}
+  ${c.brand('init')}          Initialize a config file
+  ${c.brand('add-missing')}   Add keys used in code but missing from translation files
+  ${c.brand('translate')}     Auto-translate via AI
+  ${c.brand('optimize')}      Sort keys and flag empty entries in translation files
+  ${c.brand('doctor')}        Check setup and environment
+  ${c.brand('upgrade')}       Update the CLI to the latest version
 
 ${c.dim('Examples:')}
   ${c.dim('$')} translify init
-  ${c.dim('$')} translify extract --verbose
-  ${c.dim('$')} translify sync --dry-run
-  ${c.dim('$')} translify audit --config ./config/translify.config.ts
+  ${c.dim('$')} translify audit
+  ${c.dim('$')} translify add-missing --dry-run
+  ${c.dim('$')} translify check-consistency --output report.json
 
-${c.dim('Documentation:')} https://ndnci.github.io/translify/
+${c.dim('Documentation:')} https://ndnci.github.io/translify/commands/
 `,
     );
 
@@ -67,12 +69,12 @@ ${c.dim('Documentation:')} https://ndnci.github.io/translify/
     createLogger({ verbose: program.opts<{ verbose: boolean }>().verbose ?? false });
 
   registerInitCommand(program, getLogger());
-  registerExtractCommand(program, getLogger());
-  registerSyncCommand(program, getLogger());
+  registerAddMissingCommand(program, getLogger());
   registerTranslateCommand(program, getLogger());
-  registerUnusedCommand(program, getLogger());
-  registerMissingCommand(program, getLogger());
-  registerDuplicateCommand(program, getLogger());
+  registerCheckUnusedCommand(program, getLogger());
+  registerCheckMissingCommand(program, getLogger());
+  registerCheckDuplicatesCommand(program, getLogger());
+  registerCheckConsistencyCommand(program, getLogger());
   registerOptimizeCommand(program, getLogger());
   registerAuditCommand(program, getLogger());
   registerDoctorCommand(program, getLogger());

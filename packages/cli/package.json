@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "Intelligent i18n CLI — extract, sync, detect, and translate your app",
   "keywords": [
     "i18n",
@@ -58,7 +58,8 @@
     "commander": "^13.1.0",
     "fast-glob": "^3.3.2",
     "jiti": "^1.21.6",
-    "openai": "^4.77.0",
+    "jsonc-parser": "^3.3.1",
+    "openai": "^6.45.0",
     "ora": "^8.1.1",
     "zod": "^3.24.1"
   },

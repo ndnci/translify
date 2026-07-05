@@ -1,6 +1,9 @@
 import _traverse from '@babel/traverse';
+import type { Binding } from '@babel/traverse';
 import type {
+  ArgumentPlaceholder,
   Expression,
+  SpreadElement,
   StringLiteral,
   TemplateLiteral,
   V8IntrinsicIdentifier,
@@ -25,6 +28,12 @@ export interface ExtractOptions {
   file: string;
   /** Function names/expressions to treat as translation calls, e.g. ["t", "i18n.t"] */
   translationFunctions: string[];
+  /**
+   * Namespace-hook function names, e.g. ["useTranslations", "getTranslations"].
+   * A variable bound to one of these calls with a static namespace prefixes
+   * every translation-function call made through that variable.
+   */
+  namespaceFunctions?: string[];
   /** Exact words to ignore */
   ignoredWords: string[];
   /** Regex patterns to ignore */
@@ -44,8 +53,33 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
   const entries: ExtractionEntry[] = [];
 
   const parsedFunctions = options.translationFunctions.map(parseFunctionSpec);
+  const parsedNamespaceFunctions = (options.namespaceFunctions ?? []).map(parseFunctionSpec);
+
+  // Maps a variable binding (not just a name, to respect shadowing/scoping)
+  // to the static namespace it was created with, e.g.
+  // `const t = useTranslations("CommonMessage")` -> binding for `t` -> "CommonMessage"
+  const namespaceByBinding = new Map<Binding, string>();
 
   traverse(ast, {
+    VariableDeclarator(path) {
+      const { node } = path;
+      if (node.id.type !== 'Identifier' || !node.init) return;
+
+      // Unwrap `await getTranslations(...)`
+      const init = node.init.type === 'AwaitExpression' ? node.init.argument : node.init;
+      if (!init || init.type !== 'CallExpression') return;
+
+      const call = init;
+      const matchedHook = parsedNamespaceFunctions.find((fn) => matchesCallee(call.callee, fn));
+      if (!matchedHook) return;
+
+      const namespace = extractStaticNamespace(call.arguments[0]);
+      if (!namespace) return;
+
+      const binding = path.scope.getBinding(node.id.name);
+      if (binding) namespaceByBinding.set(binding, namespace);
+    },
+
     CallExpression(path) {
       const { node } = path;
       const callee = node.callee;
@@ -53,11 +87,17 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
       const matchedFn = parsedFunctions.find((fn) => matchesCallee(callee, fn));
       if (!matchedFn) return;
 
+      let namespace: string | undefined;
+      if (callee.type === 'Identifier') {
+        const binding = path.scope.getBinding(callee.name);
+        if (binding) namespace = namespaceByBinding.get(binding);
+      }
+
       const firstArg = node.arguments[0];
       if (!firstArg) return;
 
       if (firstArg.type === 'StringLiteral') {
-        const key = (firstArg as StringLiteral).value;
+        const key = applyNamespace((firstArg as StringLiteral).value, namespace);
 
         if (shouldIgnoreKey(key, options.ignoredWords, options.ignoredPatterns)) return;
 
@@ -73,7 +113,10 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
         // Template literals with no expressions are static strings
         const tl = firstArg as TemplateLiteral;
         if (tl.expressions.length === 0 && tl.quasis[0]) {
-          const key = tl.quasis[0].value.cooked ?? tl.quasis[0].value.raw;
+          const key = applyNamespace(
+            tl.quasis[0].value.cooked ?? tl.quasis[0].value.raw,
+            namespace,
+          );
 
           if (shouldIgnoreKey(key, options.ignoredWords, options.ignoredPatterns)) return;
 
@@ -173,4 +216,41 @@ function shouldIgnoreKey(key: string, ignoredWords: string[], ignoredPatterns: s
   if (ignoredWords.includes(key)) return true;
   if (matchesAnyPattern(key, ignoredPatterns)) return true;
   return false;
+}
+
+/**
+ * Extracts a static namespace string from a namespace-hook call's first
+ * argument, supporting both `useTranslations("Namespace")` and
+ * `getTranslations({ namespace: "Namespace" })` shapes.
+ */
+function extractStaticNamespace(
+  arg: Expression | SpreadElement | ArgumentPlaceholder | undefined,
+): string | undefined {
+  if (!arg || arg.type === 'ArgumentPlaceholder' || arg.type === 'SpreadElement') {
+    return undefined;
+  }
+
+  if (arg.type === 'StringLiteral') {
+    return arg.value;
+  }
+
+  if (arg.type === 'ObjectExpression') {
+    for (const prop of arg.properties) {
+      if (
+        prop.type === 'ObjectProperty' &&
+        !prop.computed &&
+        prop.key.type === 'Identifier' &&
+        prop.key.name === 'namespace' &&
+        prop.value.type === 'StringLiteral'
+      ) {
+        return prop.value.value;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function applyNamespace(key: string, namespace: string | undefined): string {
+  return namespace ? `${namespace}.${key}` : key;
 }

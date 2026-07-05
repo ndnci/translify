@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   DEFAULT_TRANSLATION_FUNCTIONS,
+  DEFAULT_NAMESPACE_FUNCTIONS,
   DEFAULT_IGNORED_PATTERNS,
   DEFAULT_IGNORED_WORDS,
   DEFAULT_SOURCE_INCLUDE,
@@ -35,6 +36,16 @@ const ExtractionSchema = z.object({
    * Example: ["t", "i18n.t", "translate", "$t"]
    */
   translation_functions: z.array(z.string()).default(DEFAULT_TRANSLATION_FUNCTIONS),
+
+  /**
+   * Namespace-hook function names whose static first argument (or `namespace`
+   * property, for `getTranslations({ namespace: '...' })`-style calls)
+   * establishes a key prefix for the translation function it returns.
+   *
+   * Example: `const t = useTranslations("CommonMessage")` then `t("save")`
+   * extracts the key `CommonMessage.save`, not just `save`.
+   */
+  namespace_functions: z.array(z.string()).default(DEFAULT_NAMESPACE_FUNCTIONS),
 
   /** Exact words to never flag as hardcoded text */
   ignored_words: z.array(z.string()).default(DEFAULT_IGNORED_WORDS),

@@ -32,38 +32,33 @@ export default defineConfig({
   },
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
+    namespace_functions: ['useTranslations', 'getTranslations'],
   },
 });
 ```
 
 Edit the config to match your project structure.
 
-## 3. Extract translation keys
-
-```bash
-translify extract
-```
-
-This scans your source files and reports all keys found via your translation
-functions.
-
-## 4. Sync translation files
-
-```bash
-translify sync
-```
-
-Adds any keys used in code but missing from your JSON files. Safe to run
-repeatedly.
-
-## 5. Run an audit
+## 3. Run a health audit
 
 ```bash
 translify audit
 ```
 
-Full health check: missing keys, unused keys, duplicate values — all in one
-command.
+Full health check in one command: missing keys, unused keys, duplicate values,
+duplicate keys, and keys inconsistent across locales. Each check is also
+available on its own — `check-missing`, `check-unused`, `check-duplicates`,
+`check-consistency` — if you only want one report.
+
+## 4. Add missing keys
+
+```bash
+translify add-missing --dry-run
+translify add-missing
+```
+
+Adds any keys used in code but missing from your JSON files, preserving the
+existing formatting of each file. Safe to run repeatedly.
 
 ## Using in CI
 

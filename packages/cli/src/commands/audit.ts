@@ -9,25 +9,38 @@ import {
   detectUnusedKeys,
   detectMissingKeys,
   detectDuplicateValues,
+  detectDuplicateKeys,
+  detectLocaleInconsistencies,
 } from '@ndnci/translify-core';
 import { relativePath } from '@ndnci/translify-shared';
 import type { CliLogger } from '../ui/logger.js';
 import { createSpinner } from '../ui/spinner.js';
 import { c } from '../ui/colors.js';
+import { renderTable } from '../ui/table.js';
+import { writeReport } from '../ui/report-writer.js';
+
+interface AuditOptions {
+  output?: string;
+}
 
 export function registerAuditCommand(program: Command, logger: CliLogger): void {
   program
     .command('audit')
-    .description('Full i18n health audit — runs all checks in one pass')
+    .alias('check-all')
+    .description(
+      'Full i18n health audit — runs every check in one pass (missing, unused, duplicate values, duplicate keys, locale consistency)',
+    )
+    .option('--output <file>', 'write the report to a file (.json or plain text)')
     .addHelpText(
       'after',
       `
 ${c.dim('Examples:')}
   ${c.brand('$')} translify audit
   ${c.brand('$')} translify audit --verbose
+  ${c.brand('$')} translify audit --output report.json
 `,
     )
-    .action(async () => {
+    .action(async (opts: AuditOptions) => {
       const { cwd, config: configPath } = program.opts<{
         cwd: string;
         config?: string;
@@ -48,6 +61,7 @@ ${c.dim('Examples:')}
 
         const extractResults = await extractFromFiles(scan.files, {
           translationFunctions: config.extraction.translation_functions,
+          namespaceFunctions: config.extraction.namespace_functions,
           ignoredWords: config.extraction.ignored_words,
           ignoredPatterns: [
             ...config.extraction.ignored_patterns,
@@ -61,16 +75,36 @@ ${c.dim('Examples:')}
 
         spinner.update('Running detection checks…');
 
-        const [unusedKeys, missingKeys, duplicateValues] = [
-          detectUnusedKeys(translationFiles, usedKeys),
-          detectMissingKeys(translationFiles, allEntries),
-          detectDuplicateValues(translationFiles),
-        ];
+        const unusedKeys = detectUnusedKeys(translationFiles, usedKeys);
+        const missingKeys = detectMissingKeys(translationFiles, allEntries);
+        const duplicateValues = detectDuplicateValues(translationFiles);
+        const duplicateKeys = detectDuplicateKeys(translationFiles);
+        const localeInconsistencies = detectLocaleInconsistencies(
+          translationFiles,
+          config.translations.default_language,
+        );
 
         spinner.stop();
 
         const hasIssues =
-          unusedKeys.length > 0 || missingKeys.length > 0 || duplicateValues.length > 0;
+          unusedKeys.length > 0 ||
+          missingKeys.length > 0 ||
+          duplicateValues.length > 0 ||
+          duplicateKeys.length > 0 ||
+          localeInconsistencies.length > 0;
+
+        if (opts.output) {
+          writeReport(opts.output, {
+            timestamp: new Date().toISOString(),
+            totalFiles: translationPaths.length,
+            totalKeys: usedKeys.size,
+            unusedKeys,
+            missingKeys,
+            duplicateValues,
+            duplicateKeys,
+            localeInconsistencies,
+          });
+        }
 
         // ── Header ──────────────────────────────────────────────────────────
 
@@ -93,16 +127,27 @@ ${c.dim('Examples:')}
           { label: 'Missing keys', count: missingKeys.length },
           { label: 'Unused keys', count: unusedKeys.length },
           { label: 'Duplicate values', count: duplicateValues.length },
+          { label: 'Duplicate keys', count: duplicateKeys.length },
+          { label: 'Locale inconsistencies', count: localeInconsistencies.length },
         ];
 
         logger.section('Checks');
-        for (const check of checks) {
-          const icon = check.count === 0 ? c.tick : c.cross;
-          const countStr = check.count === 0 ? c.success('none') : c.error(String(check.count));
-          process.stdout.write(`  ${icon} ${check.label.padEnd(20)} ${countStr}\n`);
-        }
+        process.stdout.write(
+          '\n' +
+            renderTable(
+              [
+                { header: 'Check' },
+                {
+                  header: 'Issues',
+                  color: (v) => (v.trim() === '0' ? c.success(v) : c.error(v)),
+                },
+              ],
+              checks.map((check) => [check.label, String(check.count)]),
+            ) +
+            '\n',
+        );
 
-        // ── Details (verbose or if issues) ──────────────────────────────────
+        // ── Details (issues only) ────────────────────────────────────────────
 
         if (missingKeys.length > 0) {
           logger.section('Missing keys');
@@ -123,6 +168,30 @@ ${c.dim('Examples:')}
           }
           if (unusedKeys.length > 20) {
             process.stdout.write(c.dim(`  … and ${unusedKeys.length - 20} more\n`));
+          }
+        }
+
+        if (duplicateKeys.length > 0) {
+          logger.section('Duplicate keys');
+          for (const dup of duplicateKeys.slice(0, 20)) {
+            process.stdout.write(
+              `  ${c.cross} ${c.key(dup.key)}  ${c.dim(relativePath(dup.file, cwd))}\n`,
+            );
+          }
+          if (duplicateKeys.length > 20) {
+            process.stdout.write(c.dim(`  … and ${duplicateKeys.length - 20} more\n`));
+          }
+        }
+
+        if (localeInconsistencies.length > 0) {
+          logger.section('Locale inconsistencies');
+          for (const inc of localeInconsistencies.slice(0, 20)) {
+            process.stdout.write(
+              `  ${c.warn_sym} ${c.key(inc.key)}  ${c.dim(`missing in: ${inc.missingIn.join(', ')}`)}\n`,
+            );
+          }
+          if (localeInconsistencies.length > 20) {
+            process.stdout.write(c.dim(`  … and ${localeInconsistencies.length - 20} more\n`));
           }
         }
 

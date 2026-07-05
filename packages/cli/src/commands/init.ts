@@ -26,6 +26,7 @@ export default {
 
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
+    namespace_functions: ['useTranslations', 'getTranslations'],
     ignored_words: ['OK', 'API', 'ID'],
     ignored_patterns: ['^v[0-9]+$'],
     custom_regex_patterns: [],
@@ -95,6 +96,13 @@ async function runInit(options: InitOptions, logger: CliLogger): Promise<void> {
   logger.spacer();
   logger.info(`Next steps:`);
   process.stdout.write(`\n  1. Edit ${c.file('translify.config.ts')} to match your project\n`);
-  process.stdout.write(`  2. Run ${c.brand('translify extract')} to scan your source files\n`);
-  process.stdout.write(`  3. Run ${c.brand('translify sync')} to sync translation files\n\n`);
+  process.stdout.write(
+    `  2. Run ${c.brand('translify audit')} for a full health report (missing, unused, duplicate, and inconsistent keys)\n`,
+  );
+  process.stdout.write(
+    `  3. Run ${c.brand('translify add-missing --dry-run')} to preview new keys, then ${c.brand('translify add-missing')} to write them\n\n`,
+  );
+  process.stdout.write(
+    `  ${c.dim('Full command reference:')} https://ndnci.github.io/translify/commands/\n\n`,
+  );
 }

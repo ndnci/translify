@@ -1,10 +1,10 @@
 export { registerInitCommand } from './init.js';
-export { registerExtractCommand } from './extract.js';
-export { registerSyncCommand } from './sync.js';
+export { registerAddMissingCommand } from './add-missing.js';
 export { registerTranslateCommand } from './translate.js';
-export { registerUnusedCommand } from './unused.js';
-export { registerMissingCommand } from './missing.js';
-export { registerDuplicateCommand } from './duplicate.js';
+export { registerCheckUnusedCommand } from './check-unused.js';
+export { registerCheckMissingCommand } from './check-missing.js';
+export { registerCheckDuplicatesCommand } from './check-duplicates.js';
+export { registerCheckConsistencyCommand } from './check-consistency.js';
 export { registerOptimizeCommand } from './optimize.js';
 export { registerAuditCommand } from './audit.js';
 export { registerDoctorCommand } from './doctor.js';

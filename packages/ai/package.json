@@ -43,7 +43,7 @@
   "dependencies": {
     "@ndnci/translify-config": "workspace:*",
     "@ndnci/translify-shared": "workspace:*",
-    "openai": "^4.77.0"
+    "openai": "^6.45.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

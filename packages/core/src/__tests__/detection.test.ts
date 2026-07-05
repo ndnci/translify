@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
+import { join } from 'node:path';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { detectUnusedKeys } from '../detection/unused-detector.js';
 import { detectMissingKeys } from '../detection/missing-detector.js';
 import { detectDuplicateValues } from '../detection/duplicate-detector.js';
+import { detectDuplicateKeys } from '../detection/duplicate-key-detector.js';
+import { detectLocaleInconsistencies } from '../detection/consistency-detector.js';
 import type { TranslationFile, ExtractionEntry } from '@ndnci/translify-shared';
 
 const enFile: TranslationFile = {
@@ -57,5 +62,77 @@ describe('detectDuplicateValues', () => {
     const results = detectDuplicateValues([enFile]);
     const titles = results.find((r) => r.value === 'Home');
     expect(titles).toBeUndefined();
+  });
+});
+
+describe('detectDuplicateKeys', () => {
+  let dir: string;
+
+  afterEach(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('finds literal duplicate keys that JSON.parse silently drops', () => {
+    dir = mkdtempSync(join(tmpdir(), 'translify-dupkey-'));
+    const path = join(dir, 'en.json');
+    writeFileSync(
+      path,
+      ['{', '  "home": {', '    "title": "Home",', '    "title": "Home page"', '  }', '}'].join(
+        '\n',
+      ),
+      'utf8',
+    );
+
+    const file: TranslationFile = {
+      language: 'en',
+      path,
+      data: JSON.parse(readFileSync(path, 'utf8')),
+    };
+
+    const results = detectDuplicateKeys([file]);
+    expect(results).toHaveLength(1);
+    expect(results[0]!.key).toBe('home.title');
+    expect(results[0]!.occurrences).toHaveLength(2);
+  });
+
+  it('does not flag keys declared once', () => {
+    dir = mkdtempSync(join(tmpdir(), 'translify-dupkey-'));
+    const path = join(dir, 'en.json');
+    writeFileSync(path, '{\n  "home": {\n    "title": "Home"\n  }\n}\n', 'utf8');
+
+    const file: TranslationFile = { language: 'en', path, data: { home: { title: 'Home' } } };
+
+    expect(detectDuplicateKeys([file])).toHaveLength(0);
+  });
+});
+
+describe('detectLocaleInconsistencies', () => {
+  const en: TranslationFile = {
+    language: 'en',
+    path: '/messages/en.json',
+    data: { home: { title: 'Home', subtitle: 'Welcome' }, about: { title: 'About' } },
+  };
+  const fr: TranslationFile = {
+    language: 'fr',
+    path: '/messages/fr.json',
+    data: { home: { title: 'Accueil' }, about: { title: 'À propos' } },
+  };
+
+  it('flags keys present in the default language but missing from another locale', () => {
+    const results = detectLocaleInconsistencies([en, fr], 'en');
+    const subtitle = results.find((r) => r.key === 'home.subtitle');
+    expect(subtitle).toBeDefined();
+    expect(subtitle!.missingIn).toEqual(['fr']);
+    expect(subtitle!.presentIn).toEqual(['en']);
+  });
+
+  it('does not flag keys present in every locale', () => {
+    const results = detectLocaleInconsistencies([en, fr], 'en');
+    expect(results.find((r) => r.key === 'home.title')).toBeUndefined();
+    expect(results.find((r) => r.key === 'about.title')).toBeUndefined();
+  });
+
+  it('returns nothing for a single-locale project', () => {
+    expect(detectLocaleInconsistencies([en], 'en')).toEqual([]);
   });
 });

@@ -19,6 +19,9 @@ export const CONFIG_SEARCH_DIRS = ['.', 'config', '.config'];
 // Default translation function names
 export const DEFAULT_TRANSLATION_FUNCTIONS = ['t', 'i18n.t', 'translate', '$t'];
 
+// Default namespace-hook functions, e.g. `const t = useTranslations("Namespace")`
+export const DEFAULT_NAMESPACE_FUNCTIONS = ['useTranslations', 'getTranslations'];
+
 // Default patterns to ignore during extraction
 export const DEFAULT_IGNORED_PATTERNS = [
   '^v\\d+', // version strings like v1.2.3

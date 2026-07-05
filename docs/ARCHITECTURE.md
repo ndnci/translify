@@ -112,26 +112,25 @@ The **user-facing layer**. Thin wrappers over core logic:
 
 ## Data flow
 
-### `translify extract`
-
-```
-Config → file scanner → babel parser → AST traverser → ExtractionResult[]
-```
-
-### `translify sync`
+### `translify add-missing` (formerly `sync`)
 
 ```
 Config → [file scanner + translation scanner] → extractor → syncTranslationFiles()
+       → writeTranslationFileSurgical() (jsonc-parser edits, preserves formatting)
 ```
 
-### `translify audit`
+### `translify audit` (alias `check-all`)
 
 ```
 Config → [source files + translation files]
        → [extractor + loadTranslationFile()]
-       → [detectUnusedKeys + detectMissingKeys + detectDuplicateValues]
+       → [detectUnusedKeys + detectMissingKeys + detectDuplicateValues
+          + detectDuplicateKeys + detectLocaleInconsistencies]
        → AuditResult → CLI output
 ```
+
+Each detector above is also exposed as its own command (`check-missing`,
+`check-unused`, `check-duplicates`, `check-consistency`) for a narrower report.
 
 ---
 

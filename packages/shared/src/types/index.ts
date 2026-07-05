@@ -73,10 +73,21 @@ export interface DuplicateValueResult {
 }
 
 export interface DuplicateKeyResult {
-  /** Key that appears in multiple language files at the same path */
+  /** Dot-notation key that is declared more than once in the same raw JSON file */
   key: string;
-  /** Files where this duplication exists */
-  files: string[];
+  /** Translation file path where the duplication was found */
+  file: string;
+  /** Every location the key was declared at (JSON.parse silently keeps only the last one) */
+  occurrences: { line: number; column: number }[];
+}
+
+export interface LocaleInconsistencyResult {
+  /** Dot-notation key present in the default language but not consistently mirrored */
+  key: string;
+  /** Non-default languages missing this key */
+  missingIn: string[];
+  /** Languages (including default) where this key is present */
+  presentIn: string[];
 }
 
 // ─── Sync ──────────────────────────────────────────────────────────────────────
@@ -109,6 +120,8 @@ export interface AuditResult {
   unusedKeys: UnusedKeyResult[];
   missingKeys: MissingKeyResult[];
   duplicateValues: DuplicateValueResult[];
+  duplicateKeys: DuplicateKeyResult[];
+  localeInconsistencies: LocaleInconsistencyResult[];
   totalFiles: number;
   totalKeys: number;
   totalUsedKeys: number;

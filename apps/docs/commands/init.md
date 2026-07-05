@@ -33,8 +33,10 @@ $ translify init
   Next steps:
 
   1. Edit translify.config.ts to match your project
-  2. Run translify extract to scan your source files
-  3. Run translify sync to sync translation files
+  2. Run translify audit for a full health report (missing, unused, duplicate, and inconsistent keys)
+  3. Run translify add-missing --dry-run to preview new keys, then translify add-missing to write them
+
+  Full command reference: https://ndnci.github.io/translify/commands/
 ```
 
 ## Generated config
@@ -53,6 +55,7 @@ export default defineConfig({
   },
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
+    namespace_functions: ['useTranslations', 'getTranslations'],
     ignored_words: ['OK', 'API', 'ID'],
     ignored_patterns: ['^v[0-9]+$'],
   },

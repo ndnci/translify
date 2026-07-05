@@ -26,6 +26,7 @@ export default defineConfig([
       '@babel/types',
       'fast-glob',
       'jiti',
+      'jsonc-parser',
       'openai',
       'zod',
     ],

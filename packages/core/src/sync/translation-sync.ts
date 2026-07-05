@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import { modify, applyEdits, type FormattingOptions } from 'jsonc-parser';
 import {
   type TranslationFile,
   type TranslationRecord,
   type SyncResult,
   TranslationFileError,
   flattenTranslations,
-  unflattenTranslations,
   extractLanguageFromPath,
 } from '@ndnci/translify-shared';
 
@@ -39,9 +39,53 @@ export function loadTranslationFile(filePath: string): TranslationFile {
 
 /**
  * Writes a translation file back to disk with consistent 2-space indentation.
+ *
+ * Full re-serialization — use for commands that intentionally reformat the
+ * whole file (e.g. `optimize`). For adding a handful of missing keys, prefer
+ * `writeTranslationFileSurgical` so unrelated formatting is left untouched.
  */
 export function writeTranslationFile(filePath: string, data: TranslationRecord): void {
   writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n', 'utf8');
+}
+
+/**
+ * Detects the indentation style and line ending already used by a JSON file
+ * so newly inserted keys match the surrounding formatting.
+ */
+function detectFormattingOptions(rawText: string): FormattingOptions {
+  const eol = rawText.includes('\r\n') ? '\r\n' : '\n';
+  const indentMatch = rawText.match(/\n([ \t]+)\S/);
+  const indent = indentMatch?.[1] ?? '  ';
+  const insertSpaces = !indent.startsWith('\t');
+  const tabSize = insertSpaces ? indent.length : 1;
+  return { eol, insertSpaces, tabSize };
+}
+
+/**
+ * Adds keys to a JSON translation file by surgically editing its raw text
+ * (via jsonc-parser) instead of re-serializing the whole object, so every
+ * untouched line — indentation, key order, spacing — is preserved byte for
+ * byte. Only the newly inserted keys show up in a diff.
+ */
+export function writeTranslationFileSurgical(
+  filePath: string,
+  rawText: string,
+  additions: Record<string, string>,
+): void {
+  const formattingOptions = detectFormattingOptions(rawText);
+
+  let text = rawText;
+  for (const [flatKey, value] of Object.entries(additions)) {
+    const path = flatKey.split('.');
+    const edits = modify(text, path, value, { formattingOptions });
+    text = applyEdits(text, edits);
+  }
+
+  if (!text.endsWith('\n')) {
+    text += formattingOptions.eol;
+  }
+
+  writeFileSync(filePath, text, 'utf8');
 }
 
 // ─── Sync ─────────────────────────────────────────────────────────────────────
@@ -94,8 +138,11 @@ export function syncTranslationFiles(options: SyncOptions): SyncResult[] {
     }
 
     if (added.length > 0 && !options.dryRun) {
-      const updated = unflattenTranslations(flat);
-      writeTranslationFile(file.path, updated);
+      const additions: Record<string, string> = {};
+      for (const key of added) additions[key] = flat[key]!;
+
+      const rawText = readFileSync(file.path, 'utf8');
+      writeTranslationFileSurgical(file.path, rawText, additions);
     }
 
     results.push({

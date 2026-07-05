@@ -19,7 +19,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/guide/installation' },
-      { text: 'Commands', link: '/commands/init' },
+      { text: 'Commands', link: '/commands/audit' },
       { text: 'Config', link: '/guide/configuration' },
       {
         text: 'v0.1.0',
@@ -46,12 +46,12 @@ export default defineConfig({
         text: 'CLI Commands',
         items: [
           { text: 'init', link: '/commands/init' },
-          { text: 'extract', link: '/commands/extract' },
-          { text: 'sync', link: '/commands/sync' },
+          { text: 'add-missing', link: '/commands/add-missing' },
           { text: 'translate', link: '/commands/translate' },
-          { text: 'unused', link: '/commands/unused' },
-          { text: 'missing', link: '/commands/missing' },
-          { text: 'duplicate', link: '/commands/duplicate' },
+          { text: 'check-missing', link: '/commands/check-missing' },
+          { text: 'check-unused', link: '/commands/check-unused' },
+          { text: 'check-duplicates', link: '/commands/check-duplicates' },
+          { text: 'check-consistency', link: '/commands/check-consistency' },
           { text: 'optimize', link: '/commands/optimize' },
           { text: 'audit', link: '/commands/audit' },
           { text: 'doctor', link: '/commands/doctor' },
