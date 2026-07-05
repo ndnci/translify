@@ -1,6 +1,6 @@
 # `translify check-config`
 
-Validate the Translify config file. Alias: `validate-config`.
+Validate the Translify config file.
 
 ## Usage
 

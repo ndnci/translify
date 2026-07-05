@@ -26,7 +26,6 @@ interface AuditOptions {
 export function registerAuditCommand(program: Command, logger: CliLogger): void {
   program
     .command('audit')
-    .alias('check-all')
     .description(
       'Full i18n health audit — runs every check in one pass (missing, unused, duplicates, locale consistency, hardcoded text)',
     )

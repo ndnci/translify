@@ -50,7 +50,7 @@ export default defineConfig({
     // both `messages/en.json` and split files like `messages/en/auth.json`.
     files: ['messages/**/*.json'],
 
-    // Used by `translify split` and by missing-key routing in split projects.
+    // Used by `translify split-translations` and by missing-key routing in split projects.
     split: {
       // Group by the first dot-key segment by default.
       depth: 1,
@@ -58,6 +58,9 @@ export default defineConfig({
       // Strings are shorthand for `{ name: 'tools', match: ['tools'] }`.
       // Object groups can match several substrings or regex patterns.
       groups: [{ name: 'tools', match: ['tool'] }, 'auth'],
+
+      // Custom group matching can inspect keys, values, or both.
+      group_match: 'keys',
 
       // Supported placeholders: `{language}` and `{group}`.
       output_pattern: 'messages/{language}/{group}.json',

@@ -23,7 +23,6 @@ interface AddLanguagesOptions {
 export function registerAddLanguagesCommand(program: Command, logger: CliLogger): void {
   program
     .command('add-languages <languages...>')
-    .alias('add-locales')
     .description('Create translation files for one or more new languages')
     .option('--empty', 'create files with empty string values instead of copying source values')
     .addHelpText(

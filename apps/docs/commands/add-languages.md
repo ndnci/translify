@@ -1,6 +1,6 @@
 # `translify add-languages`
 
-Create translation files for one or more new languages. Alias: `add-locales`.
+Create translation files for one or more new languages.
 
 ## Usage
 

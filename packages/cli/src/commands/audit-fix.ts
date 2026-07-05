@@ -34,11 +34,9 @@ interface FixOptions {
   empty?: boolean;
 }
 
-export function registerFixCommand(program: Command, logger: CliLogger): void {
-  const action = makeAction(program, logger);
-
+export function registerAuditFixCommand(program: Command, logger: CliLogger): void {
   program
-    .command('fix')
+    .command('audit-fix')
     .description('Fix deterministic audit issues (supports --dry-run, --include, --exclude)')
     .option('--include <checks>', 'comma-separated checks to fix (default: all supported)')
     .option('--exclude <checks>', 'comma-separated checks to skip')
@@ -49,19 +47,12 @@ export function registerFixCommand(program: Command, logger: CliLogger): void {
 ${c.dim('Supported checks:')} ${SUPPORTED_FIXES.join(', ')}
 
 ${c.dim('Examples:')}
-  ${c.brand('$')} translify fix --dry-run
-  ${c.brand('$')} translify fix --include missing,locale-consistency
-  ${c.brand('$')} translify fix --exclude unused
+  ${c.brand('$')} translify audit-fix --dry-run
+  ${c.brand('$')} translify audit-fix --include missing,locale-consistency
+  ${c.brand('$')} translify audit-fix --exclude unused
 `,
     )
-    .action(action);
-
-  program
-    .command('audit-fix', { hidden: true })
-    .option('--include <checks>')
-    .option('--exclude <checks>')
-    .option('--empty')
-    .action(action);
+    .action(makeAction(program, logger));
 }
 
 function makeAction(program: Command, logger: CliLogger) {

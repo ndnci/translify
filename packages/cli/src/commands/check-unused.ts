@@ -19,8 +19,6 @@ interface CheckUnusedOptions {
 }
 
 export function registerCheckUnusedCommand(program: Command, logger: CliLogger): void {
-  const action = makeAction(program, logger);
-
   program
     .command('check-unused')
     .description('Detect translation keys defined in files but never used in source code')
@@ -34,17 +32,7 @@ ${c.dim('Examples:')}
   ${c.brand('$')} translify check-unused --output report.json
 `,
     )
-    .action(action);
-
-  program
-    .command('unused', { hidden: true })
-    .option('--output <file>')
-    .action((opts: CheckUnusedOptions) => {
-      logger.warn(
-        `${c.bold('translify unused')} is deprecated, use ${c.brand('translify check-unused')} instead.`,
-      );
-      return action(opts);
-    });
+    .action(makeAction(program, logger));
 }
 
 function makeAction(program: Command, logger: CliLogger) {

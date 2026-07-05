@@ -15,9 +15,9 @@ import {
   registerCheckConsistencyCommand,
   registerOptimizeCommand,
   registerAuditCommand,
-  registerFixCommand,
-  registerSplitCommand,
-  registerDoctorCommand,
+  registerAuditFixCommand,
+  registerHardcodedFixCommand,
+  registerSplitTranslationsCommand,
   registerUpgradeCommand,
   registerVersionCommand,
 } from './commands/index.js';
@@ -50,26 +50,27 @@ ${c.dim('Checks (read-only):')}
   ${c.brand('check-consistency')}  Keys not mirrored across every locale
   ${c.brand('check-hardcoded')}    User-facing text that is hardcoded in source files
   ${c.brand('check-config')}       Validate config shape, values, and unknown keys
-  ${c.brand('audit')}              Run every check above in one pass (alias: check-all)
+  ${c.brand('audit')}              Run every check above in one pass
 
 ${c.dim('Actions:')}
   ${c.brand('init')}          Initialize a config file
   ${c.brand('add-missing')}   Add keys used in code but missing from translation files
   ${c.brand('add-languages')} Create translation files for new languages
-  ${c.brand('split')}         Split large locale files by context (alias: extract)
-  ${c.brand('fix')}           Fix deterministic audit issues
+  ${c.brand('split-translations')} Split large locale files by context
+  ${c.brand('audit-fix')}     Fix deterministic audit issues
+  ${c.brand('hardcoded-fix')} Replace hardcoded text with i18n calls
   ${c.brand('translate')}     Auto-translate via AI
   ${c.brand('optimize')}      Sort keys and flag empty entries in translation files
-  ${c.brand('doctor')}        Check setup and environment
   ${c.brand('version')}       Print the installed version and check for updates
   ${c.brand('upgrade')}       Update the CLI to the latest version
 
 ${c.dim('Examples:')}
   ${c.dim('$')} translify init
   ${c.dim('$')} translify audit
-  ${c.dim('$')} translify split --groups tools=tool,auth=auth
+  ${c.dim('$')} translify split-translations --groups "tools=tool|foo,auth=auth"
   ${c.dim('$')} translify add-languages it de --empty
-  ${c.dim('$')} translify fix --dry-run
+  ${c.dim('$')} translify audit-fix --dry-run
+  ${c.dim('$')} translify hardcoded-fix --dry-run
   ${c.dim('$')} translify add-missing --dry-run
   ${c.dim('$')} translify check-consistency --output report.json
 
@@ -95,9 +96,9 @@ ${c.dim('Documentation:')} https://ndnci.github.io/translify/commands/
   registerCheckConsistencyCommand(program, getLogger());
   registerOptimizeCommand(program, getLogger());
   registerAuditCommand(program, getLogger());
-  registerFixCommand(program, getLogger());
-  registerSplitCommand(program, getLogger());
-  registerDoctorCommand(program, getLogger());
+  registerAuditFixCommand(program, getLogger());
+  registerHardcodedFixCommand(program, getLogger());
+  registerSplitTranslationsCommand(program, getLogger());
   registerUpgradeCommand(program, getLogger());
   registerVersionCommand(program, getLogger());
 

@@ -70,6 +70,8 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
   const addHardcodedEntry = (
     text: string,
     loc: { line?: number; column?: number } | null | undefined,
+    range: { start?: number | null | undefined; end?: number | null | undefined },
+    hardcodedKind: NonNullable<ExtractionEntry['hardcodedKind']>,
   ) => {
     const normalized = normalizeHardcodedText(text);
     if (!normalized) return;
@@ -82,6 +84,9 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
       line: loc?.line ?? 0,
       column: loc?.column ?? 0,
       type: 'hardcoded-text',
+      ...(typeof range.start === 'number' && { start: range.start }),
+      ...(typeof range.end === 'number' && { end: range.end }),
+      hardcodedKind,
     });
   };
 
@@ -208,14 +213,24 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
 
     JSXText(path) {
       if (!options.detectHardcodedText) return;
-      addHardcodedEntry(path.node.value, path.node.loc?.start);
+      addHardcodedEntry(
+        path.node.value,
+        path.node.loc?.start,
+        { start: path.node.start, end: path.node.end },
+        'jsx-text',
+      );
     },
 
     StringLiteral(path) {
       if (!options.detectHardcodedText) return;
       if (isTranslationArgument(path, parsedFunctions, parsedNamespaceFunctions)) return;
       if (isTechnicalStringLiteral(path)) return;
-      addHardcodedEntry(path.node.value, path.node.loc?.start);
+      addHardcodedEntry(
+        path.node.value,
+        path.node.loc?.start,
+        { start: path.node.start, end: path.node.end },
+        path.parent.type === 'JSXAttribute' ? 'jsx-attribute' : 'string-literal',
+      );
     },
   });
 

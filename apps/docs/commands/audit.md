@@ -1,6 +1,6 @@
 # `translify audit`
 
-Run a full i18n health audit — every check in one pass. Alias: `check-all`.
+Run a full i18n health audit — every check in one pass.
 
 ## Usage
 

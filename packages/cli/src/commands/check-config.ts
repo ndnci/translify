@@ -6,7 +6,6 @@ import { c } from '../ui/colors.js';
 export function registerCheckConfigCommand(program: Command, logger: CliLogger): void {
   program
     .command('check-config')
-    .alias('validate-config')
     .description('Validate the Translify config file and report invalid or unknown keys')
     .addHelpText(
       'after',

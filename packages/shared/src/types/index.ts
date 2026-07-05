@@ -15,6 +15,12 @@ export interface ExtractionEntry {
   type: 'translation-call' | 'hardcoded-text';
   /** The function call that was matched, e.g. "t" or "i18n.t" */
   callExpression?: string;
+  /** 0-indexed source start offset, when available */
+  start?: number;
+  /** 0-indexed source end offset, when available */
+  end?: number;
+  /** Shape of a hardcoded-text occurrence for automated replacement */
+  hardcodedKind?: 'jsx-text' | 'jsx-attribute' | 'string-literal';
 }
 
 export interface ExtractionResult {

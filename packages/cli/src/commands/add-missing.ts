@@ -18,8 +18,6 @@ interface AddMissingOptions {
 }
 
 export function registerAddMissingCommand(program: Command, logger: CliLogger): void {
-  const action = makeAction(program, logger);
-
   program
     .command('add-missing')
     .description(
@@ -35,17 +33,7 @@ ${c.dim('Examples:')}
   ${c.brand('$')} translify add-missing --empty
 `,
     )
-    .action(action);
-
-  program
-    .command('sync', { hidden: true })
-    .option('--empty')
-    .action((opts: AddMissingOptions) => {
-      logger.warn(
-        `${c.bold('translify sync')} is deprecated, use ${c.brand('translify add-missing')} instead.`,
-      );
-      return action(opts);
-    });
+    .action(makeAction(program, logger));
 }
 
 function makeAction(program: Command, logger: CliLogger) {

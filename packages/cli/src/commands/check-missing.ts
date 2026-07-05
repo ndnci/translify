@@ -18,8 +18,6 @@ interface CheckMissingOptions {
 }
 
 export function registerCheckMissingCommand(program: Command, logger: CliLogger): void {
-  const action = makeAction(program, logger);
-
   program
     .command('check-missing')
     .description('Detect translation keys used in code but missing from translation files')
@@ -33,17 +31,7 @@ ${c.dim('Examples:')}
   ${c.brand('$')} translify check-missing --output report.json
 `,
     )
-    .action(action);
-
-  program
-    .command('missing', { hidden: true })
-    .option('--output <file>')
-    .action((opts: CheckMissingOptions) => {
-      logger.warn(
-        `${c.bold('translify missing')} is deprecated, use ${c.brand('translify check-missing')} instead.`,
-      );
-      return action(opts);
-    });
+    .action(makeAction(program, logger));
 }
 
 function makeAction(program: Command, logger: CliLogger) {

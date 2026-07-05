@@ -21,6 +21,7 @@ import { createSpinner } from '../ui/spinner.js';
 interface SplitOptions {
   depth?: string;
   groups?: string;
+  groupMatch?: 'keys' | 'values' | 'both';
   outputPattern?: string;
   keepSource?: boolean;
 }
@@ -30,25 +31,26 @@ interface SplitGroup {
   match: string[];
 }
 
-export function registerSplitCommand(program: Command, logger: CliLogger): void {
+export function registerSplitTranslationsCommand(program: Command, logger: CliLogger): void {
   program
-    .command('split')
-    .alias('extract')
+    .command('split-translations')
     .description('Split large locale JSON files into multiple files by context')
     .option('--depth <number>', 'dot-key depth used for default grouping', '1')
     .option(
       '--groups <groups>',
       'custom groups, e.g. "tools=tool,auth=auth,marketing=landing|pricing"',
     )
+    .option('--group-match <mode>', 'what custom groups inspect: keys, values, or both')
     .option('--output-pattern <pattern>', 'path pattern with {language} and {group}')
     .option('--keep-source', 'keep the original monolithic files after splitting')
     .addHelpText(
       'after',
       `
 ${c.dim('Examples:')}
-  ${c.brand('$')} translify split --dry-run
-  ${c.brand('$')} translify split --groups tools=tool,auth=auth
-  ${c.brand('$')} translify split --output-pattern "messages/{language}/{group}.json"
+  ${c.brand('$')} translify split-translations --dry-run
+  ${c.brand('$')} translify split-translations --groups "tools=tool|foo,auth=auth"
+  ${c.brand('$')} translify split-translations --groups "legal=privacy|terms" --group-match both
+  ${c.brand('$')} translify split-translations --output-pattern "messages/{language}/{group}.json"
 `,
     )
     .action(async (opts: SplitOptions) => {
@@ -73,11 +75,15 @@ ${c.dim('Examples:')}
         if (!Number.isInteger(depth) || depth < 1) {
           throw new Error('--depth must be an integer greater than 0');
         }
+        if (!['keys', 'values', 'both'].includes(opts.groupMatch ?? 'keys')) {
+          throw new Error('--group-match must be one of: keys, values, both');
+        }
 
         const groups = [
           ...normalizeConfigGroups(config.translations.split.groups),
           ...parseCliGroups(opts.groups),
         ];
+        const groupMatch = opts.groupMatch ?? config.translations.split.group_match;
 
         spinner.update(`Splitting ${translationFiles.length} translation files…`);
 
@@ -93,6 +99,7 @@ ${c.dim('Examples:')}
           const grouped = splitRecord(file.data, {
             depth,
             groups,
+            groupMatch,
           });
 
           const outputPaths = new Set<string>();
@@ -151,13 +158,13 @@ ${c.dim('Examples:')}
 
 function splitRecord(
   data: TranslationRecord,
-  options: { depth: number; groups: SplitGroup[] },
+  options: { depth: number; groups: SplitGroup[]; groupMatch: 'keys' | 'values' | 'both' },
 ): Map<string, TranslationRecord> {
   const flat = flattenTranslations(data);
   const groupedFlat = new Map<string, Record<string, string>>();
 
   for (const [key, value] of Object.entries(flat)) {
-    const group = resolveGroupName(key, options);
+    const group = resolveGroupName(key, value, options);
     const entries = groupedFlat.get(group) ?? {};
     entries[key] = value;
     groupedFlat.set(group, entries);
@@ -170,11 +177,13 @@ function splitRecord(
   return grouped;
 }
 
-function resolveGroupName(key: string, options: { depth: number; groups: SplitGroup[] }): string {
-  const topLevel = key.split('.')[0] ?? key;
-
+function resolveGroupName(
+  key: string,
+  value: string,
+  options: { depth: number; groups: SplitGroup[]; groupMatch: 'keys' | 'values' | 'both' },
+): string {
   for (const group of options.groups) {
-    if (group.match.some((matcher) => matchesGroup(topLevel, matcher))) {
+    if (group.match.some((matcher) => matchesGroup(key, value, matcher, options.groupMatch))) {
       return group.name;
     }
   }
@@ -182,7 +191,19 @@ function resolveGroupName(key: string, options: { depth: number; groups: SplitGr
   return key.split('.').slice(0, options.depth).join('.');
 }
 
-function matchesGroup(value: string, matcher: string): boolean {
+function matchesGroup(
+  key: string,
+  value: string,
+  matcher: string,
+  groupMatch: 'keys' | 'values' | 'both',
+): boolean {
+  const haystacks =
+    groupMatch === 'keys' ? [key] : groupMatch === 'values' ? [value] : [key, value];
+
+  return haystacks.some((haystack) => matchesOne(haystack, matcher));
+}
+
+function matchesOne(value: string, matcher: string): boolean {
   try {
     return new RegExp(matcher, 'i').test(value);
   } catch {

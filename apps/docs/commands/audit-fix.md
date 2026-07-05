@@ -1,13 +1,13 @@
-# `translify fix`
+# `translify audit-fix`
 
-Fix deterministic audit issues. Hidden compatibility alias: `audit-fix`.
+Fix deterministic audit issues.
 
 ## Usage
 
 ```bash
-translify fix --dry-run
-translify fix --include missing,locale-consistency
-translify fix --exclude unused
+translify audit-fix --dry-run
+translify audit-fix --include missing,locale-consistency
+translify audit-fix --exclude unused
 ```
 
 ## Supported fixes

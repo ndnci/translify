@@ -28,6 +28,7 @@ export default {
         // { name: 'tools', match: ['tool'] },
         // { name: 'auth', match: ['auth', 'login', 'signup'] },
       ],
+      group_match: 'keys',
       output_pattern: 'messages/{language}/{group}.json',
     },
   },

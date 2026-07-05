@@ -43,6 +43,8 @@ const TranslationSplitSchema = z
      * `{ name: "tools", match: ["tools"] }`.
      */
     groups: z.array(z.union([z.string(), SplitGroupSchema])).default([]),
+    /** What custom group matchers inspect: dot-keys, translated values, or both */
+    group_match: z.enum(['keys', 'values', 'both']).default('keys'),
     /**
      * Output path pattern. Supported placeholders:
      * `{language}` and `{group}`.
@@ -57,7 +59,7 @@ const TranslationsSchema = z
     default_language: z.string().default('en'),
     /** Glob patterns pointing to JSON translation files */
     files: z.array(z.string()).default(DEFAULT_TRANSLATION_FILES),
-    /** Options used by the `split` command and missing-key routing */
+    /** Options used by `split-translations` and missing-key routing */
     split: TranslationSplitSchema.default({}),
   })
   .strict();
