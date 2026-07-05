@@ -4,9 +4,11 @@ import type { Command } from 'commander';
 import type { CliLogger } from '../ui/logger.js';
 import { c } from '../ui/colors.js';
 
-const CONFIG_TEMPLATE = `import { defineConfig } from '@ndnci/translify/config';
-
-export default defineConfig({
+const CONFIG_TEMPLATE = `// Optional editor autocomplete: install @ndnci/translify as a devDependency
+// (npm i -D @ndnci/translify) and uncomment the line below. Not required to
+// run the CLI — this file works as-is even if Translify is only installed globally.
+// /** @type {import('@ndnci/translify/config').TranslifyConfig} */
+export default {
   source: {
     include: ['src/**/*.{ts,tsx,js,jsx}'],
     exclude: [
@@ -43,7 +45,7 @@ export default defineConfig({
     model: 'gpt-4.1-mini',
     temperature: 0,
   },
-});
+};
 `;
 
 export interface InitOptions {
