@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="Translify logo" width="120" />
+  <img src="https://raw.githubusercontent.com/ndnci/translify/main/assets/logo.png" alt="Translify logo" width="120" />
 
   <h1>⚡ Translify</h1>
   <p><strong>Intelligent i18n CLI — extract, sync, detect, translate.</strong></p>
