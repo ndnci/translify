@@ -1,6 +1,8 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Command } from 'commander';
 import { resolveConfigPath, resolveConfig } from '@ndnci/translify-config';
-import { scanTranslationFiles } from '@ndnci/translify-core';
+import { scanTranslationFiles, scanFromConfig } from '@ndnci/translify-core';
 import type { CliLogger } from '../ui/logger.js';
 import { c } from '../ui/colors.js';
 
@@ -60,6 +62,21 @@ ${c.dim('Examples:')}
             ? `No files matched: ${config.translations.files.join(', ')}`
             : undefined,
         });
+
+        // ── Next.js App Router coverage ──────────────────────────────────
+        if (existsSync(join(cwd, 'app'))) {
+          const scan = await scanFromConfig(config, cwd);
+          const coversAppDir = scan.files.some((f) => f.includes(`${join(cwd, 'app')}/`));
+          checks.push({
+            label: 'app/ directory scanned',
+            pass: coversAppDir,
+            detail: !coversAppDir
+              ? "Found an app/ directory (Next.js App Router) but source.include doesn't match " +
+                'any file in it — layout.tsx/page.tsx there are never scanned. Add ' +
+                "'app/**/*.{ts,tsx,js,jsx}' to source.include."
+              : undefined,
+          });
+        }
 
         // ── AI config (if enabled) ───────────────────────────────────────
         if (config.ai_translation.enabled) {

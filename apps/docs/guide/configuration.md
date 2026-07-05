@@ -35,7 +35,7 @@ export default defineConfig({
   // ── Source ─────────────────────────────────────────────────────────────
   source: {
     // Glob patterns for source files to scan
-    include: ['src/**/*.{ts,tsx,js,jsx}'],
+    include: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
 
     // Files to exclude
     exclude: ['**/*.test.*', '**/*.spec.*', '**/node_modules/**', '**/dist/**'],

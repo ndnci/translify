@@ -55,6 +55,7 @@ export default defineConfig({
           { text: 'optimize', link: '/commands/optimize' },
           { text: 'audit', link: '/commands/audit' },
           { text: 'doctor', link: '/commands/doctor' },
+          { text: 'version', link: '/commands/version' },
           { text: 'upgrade', link: '/commands/upgrade' },
         ],
       },

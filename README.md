@@ -97,7 +97,7 @@ import { defineConfig } from '@ndnci/translify/config';
 
 export default defineConfig({
   source: {
-    include: ['src/**/*.{ts,tsx,js,jsx}'],
+    include: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
     exclude: ['**/*.test.*', '**/node_modules/**'],
   },
 
@@ -139,6 +139,8 @@ export default defineConfig({
 | `translify check-consistency` | Detect keys missing in some locales but present in others |
 | `translify optimize`          | Optimize and format translation files                     |
 | `translify doctor`            | Check your Translify setup and environment                |
+| `translify version`           | Print the installed version and check for updates         |
+| `translify upgrade`           | Update the globally installed CLI to the latest version   |
 
 > `add-missing`, `check-missing`, `check-unused`, and `check-duplicates` were
 > previously named `sync`, `missing`, `unused`, and `duplicate`. The old names

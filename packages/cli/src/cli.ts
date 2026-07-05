@@ -14,6 +14,7 @@ import {
   registerAuditCommand,
   registerDoctorCommand,
   registerUpgradeCommand,
+  registerVersionCommand,
 } from './commands/index.js';
 
 export function createCli(): Command {
@@ -50,6 +51,7 @@ ${c.dim('Actions:')}
   ${c.brand('translate')}     Auto-translate via AI
   ${c.brand('optimize')}      Sort keys and flag empty entries in translation files
   ${c.brand('doctor')}        Check setup and environment
+  ${c.brand('version')}       Print the installed version and check for updates
   ${c.brand('upgrade')}       Update the CLI to the latest version
 
 ${c.dim('Examples:')}
@@ -79,6 +81,7 @@ ${c.dim('Documentation:')} https://ndnci.github.io/translify/commands/
   registerAuditCommand(program, getLogger());
   registerDoctorCommand(program, getLogger());
   registerUpgradeCommand(program, getLogger());
+  registerVersionCommand(program, getLogger());
 
   return program;
 }

@@ -19,7 +19,7 @@ function detectPackageManager(): PackageManager {
   return 'npm';
 }
 
-function getInstalledVersion(): string | null {
+export function getInstalledVersion(): string | null {
   try {
     const selfDir = dirname(fileURLToPath(import.meta.url));
     const pkgPath = join(selfDir, '..', 'package.json');
@@ -31,13 +31,37 @@ function getInstalledVersion(): string | null {
 }
 
 /** "alpha" | "beta" | "rc" | "latest" → itself. "0.1.3-alpha.1" → "alpha". else → "latest" */
-function distTagFromVersion(version: string | null): string {
+export function distTagFromVersion(version: string | null): string {
   if (!version) return 'latest';
   const m = version.match(/-(alpha|beta|rc)\.\d+$/);
   return m?.[1] ?? 'latest';
 }
 
-async function fetchLatestVersion(distTag: string): Promise<string | null> {
+/**
+ * Compares two semver-ish version strings (`x.y.z` or `x.y.z-tag.n`).
+ * Returns positive if `a` > `b`, negative if `a` < `b`, 0 if equal.
+ * A version with a prerelease suffix is considered lower than the same
+ * numeric core without one.
+ */
+export function compareVersions(a: string, b: string): number {
+  const [aCore, aPre] = a.split('-', 2) as [string, string | undefined];
+  const [bCore, bPre] = b.split('-', 2) as [string, string | undefined];
+
+  const aParts = aCore.split('.').map(Number);
+  const bParts = bCore.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    const diff = (aParts[i] ?? 0) - (bParts[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+
+  if (aPre === bPre) return 0;
+  if (aPre === undefined) return 1;
+  if (bPre === undefined) return -1;
+  return aPre < bPre ? -1 : 1;
+}
+
+export async function fetchLatestVersion(distTag: string): Promise<string | null> {
   try {
     const res = await fetch(`https://registry.npmjs.org/${PACKAGE_NAME}`);
     if (!res.ok) return null;
@@ -96,6 +120,13 @@ export async function upgradeCommand(opts: UpgradeOptions, logger: CliLogger): P
 
   if (installedVersion === targetVersion) {
     logger.success(`Already up to date (${targetVersion}).`);
+    return;
+  }
+
+  if (!opts.version && installedVersion && compareVersions(installedVersion, targetVersion) > 0) {
+    logger.success(
+      `Already up to date (${installedVersion}) — ahead of the published ${distTag} release (${targetVersion}).`,
+    );
     return;
   }
 

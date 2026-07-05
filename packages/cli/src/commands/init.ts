@@ -10,7 +10,7 @@ const CONFIG_TEMPLATE = `// Optional editor autocomplete: install @ndnci/transli
 // /** @type {import('@ndnci/translify/config').TranslifyConfig} */
 export default {
   source: {
-    include: ['src/**/*.{ts,tsx,js,jsx}'],
+    include: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
     exclude: [
       '**/*.test.*',
       '**/*.spec.*',

@@ -33,8 +33,10 @@ export const DEFAULT_IGNORED_PATTERNS = [
 // Default words to ignore during extraction
 export const DEFAULT_IGNORED_WORDS = ['OK', 'API', 'ID', 'URL', 'HTTP', 'HTTPS'];
 
-// Default source file patterns
-export const DEFAULT_SOURCE_INCLUDE = ['src/**/*.{ts,tsx,js,jsx}'];
+// Default source file patterns. Includes both a `src/` layout and Next.js
+// App Router's top-level `app/` directory (layout.tsx/page.tsx live there,
+// outside `src/`, and are otherwise silently never scanned).
+export const DEFAULT_SOURCE_INCLUDE = ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'];
 
 // Default excluded patterns
 export const DEFAULT_SOURCE_EXCLUDE = [
@@ -51,6 +53,6 @@ export const DEFAULT_SOURCE_EXCLUDE = [
 // Default translations directory pattern
 export const DEFAULT_TRANSLATION_FILES = ['messages/*.json', 'locales/*.json', 'i18n/*.json'];
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.3.0';
 export const CLI_NAME = 'translify';
 export const PACKAGE_NAME = '@ndnci/translify';

@@ -9,3 +9,4 @@ export { registerOptimizeCommand } from './optimize.js';
 export { registerAuditCommand } from './audit.js';
 export { registerDoctorCommand } from './doctor.js';
 export { registerUpgradeCommand } from './upgrade.js';
+export { registerVersionCommand } from './version.js';

@@ -23,7 +23,7 @@ import { defineConfig } from '@ndnci/translify/config';
 
 export default defineConfig({
   source: {
-    include: ['src/**/*.{ts,tsx,js,jsx}'],
+    include: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
     exclude: ['**/*.test.*', '**/node_modules/**'],
   },
   translations: {

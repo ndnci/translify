@@ -37,12 +37,22 @@ translify doctor
 
 ## What it checks
 
-| Check             | Description                                    |
-| ----------------- | ---------------------------------------------- |
-| Node.js version   | Must be 22+                                    |
-| Config file       | Found and valid                                |
-| Translation files | At least one file matches `translations.files` |
-| AI provider key   | API key present when `ai_translation.enabled`  |
+| Check                    | Description                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| Node.js version          | Must be 22+                                                                     |
+| Config file              | Found and valid                                                                 |
+| Translation files        | At least one file matches `translations.files`                                  |
+| `app/` directory scanned | If a Next.js App Router `app/` directory exists, `source.include` must cover it |
+| AI provider key          | API key present when `ai_translation.enabled`                                   |
+
+### `app/` directory scanned
+
+Next.js App Router keeps `layout.tsx`/`page.tsx` under a top-level `app/`
+directory, separate from `src/`. If your `source.include` only has `src/**/*`
+(the old default), every translation call inside `app/` is invisible to
+Translify — keys used there will be reported as unused by `check-unused`/`audit`
+even though they're in active use. Add `'app/**/*.{ts,tsx,js,jsx}'` to
+`source.include` to fix it.
 
 ## Exit code
 
