@@ -1,5 +1,6 @@
 import { resolve, join, dirname } from 'node:path';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import {
   CONFIG_FILE_NAMES,
   CONFIG_SEARCH_DIRS,
@@ -7,6 +8,25 @@ import {
   ConfigError,
   type TranslifyConfigInput,
 } from '@ndnci/translify-shared';
+
+const CONFIG_HELPER_SPECIFIER = '@ndnci/translify/config';
+
+/**
+ * `defineConfig` is a pure identity function used only for editor type
+ * inference — it has no real runtime behavior. Rather than requiring
+ * `@ndnci/translify/config` to be resolvable via Node's module resolution
+ * (which fails when the CLI is installed globally, since a global install
+ * isn't reachable from a project's `node_modules` chain), we alias the
+ * import to a tiny inline shim so config files load regardless of how/where
+ * the CLI is installed.
+ */
+function resolveConfigHelperShim(): string {
+  const shimPath = join(tmpdir(), 'translify-config-helper.mjs');
+  if (!existsSync(shimPath)) {
+    writeFileSync(shimPath, 'export function defineConfig(config) { return config; }\n', 'utf8');
+  }
+  return shimPath;
+}
 
 export interface ResolvedConfigPath {
   path: string;
@@ -76,6 +96,9 @@ export async function loadRawConfig(resolved: ResolvedConfigPath): Promise<Trans
       interopDefault: true,
       cache: false,
       requireCache: false,
+      alias: {
+        [CONFIG_HELPER_SPECIFIER]: resolveConfigHelperShim(),
+      },
     });
 
     const mod = jiti(resolved.path) as { default?: TranslifyConfigInput } | TranslifyConfigInput;
@@ -94,6 +117,7 @@ export async function loadRawConfig(resolved: ResolvedConfigPath): Promise<Trans
     return config;
   } catch (cause) {
     if (cause instanceof ConfigError) throw cause;
-    throw new ConfigError(`Failed to load config from ${resolved.path}`, cause);
+    const reason = cause instanceof Error ? cause.message : String(cause);
+    throw new ConfigError(`Failed to load config from ${resolved.path}\n${reason}`, cause);
   }
 }
