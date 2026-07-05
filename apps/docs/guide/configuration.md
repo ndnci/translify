@@ -58,7 +58,11 @@ export default defineConfig({
     // Namespace-hook functions. A variable bound to one of these calls with a
     // static namespace prefixes every translation call made through it, e.g.
     // `const t = useTranslations("CommonMessage")` then `t("save")` extracts
-    // the key `CommonMessage.save` instead of just `save`.
+    // the key `CommonMessage.save` instead of just `save`. Add your own
+    // custom wrapper hooks here too (e.g. `useFeatureI18n`) — Translify resolves
+    // the hook's own definition (relative imports and tsconfig path aliases)
+    // to figure out each returned function's real namespace, even when a
+    // single hook returns several functions bound to different namespaces.
     namespace_functions: ['useTranslations', 'getTranslations'],
 
     // Exact words to never flag

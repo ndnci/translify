@@ -1,19 +1,19 @@
 import _traverse from '@babel/traverse';
 import type { Binding } from '@babel/traverse';
-import type {
-  ArgumentPlaceholder,
-  Expression,
-  SpreadElement,
-  StringLiteral,
-  TemplateLiteral,
-  V8IntrinsicIdentifier,
-} from '@babel/types';
+import type { StringLiteral, TemplateLiteral } from '@babel/types';
 import {
   type ExtractionEntry,
   type ExtractionResult,
   matchesAnyPattern,
 } from '@ndnci/translify-shared';
 import { parseFile } from '../parser/babel-parser.js';
+import {
+  type ParsedFunctionSpec,
+  parseFunctionSpec,
+  matchesCallee,
+  extractStaticNamespace,
+} from './ast-helpers.js';
+import { resolveModuleSpecifier, resolveWrapperHook } from './wrapper-hook-resolver.js';
 
 // @babel/traverse uses a CJS default export that needs this interop in ESM context
 const traverse =
@@ -31,7 +31,9 @@ export interface ExtractOptions {
   /**
    * Namespace-hook function names, e.g. ["useTranslations", "getTranslations"].
    * A variable bound to one of these calls with a static namespace prefixes
-   * every translation-function call made through that variable.
+   * every translation-function call made through that variable. Also used
+   * to recognize custom wrapper hooks (e.g. a project's own `useFeatureI18n`)
+   * — their own definition is resolved and analyzed the same way.
    */
   namespaceFunctions?: string[];
   /** Exact words to ignore */
@@ -60,10 +62,24 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
   // `const t = useTranslations("CommonMessage")` -> binding for `t` -> "CommonMessage"
   const namespaceByBinding = new Map<Binding, string>();
 
+  // `import { useFeatureI18n } from '../hooks/useFeatureI18n'` -> local name -> source
+  const importedFrom = new Map<string, { source: string; imported: string }>();
+
   traverse(ast, {
+    ImportDeclaration(path) {
+      for (const spec of path.node.specifiers) {
+        if (spec.type === 'ImportSpecifier' && spec.imported.type === 'Identifier') {
+          importedFrom.set(spec.local.name, {
+            source: path.node.source.value,
+            imported: spec.imported.name,
+          });
+        }
+      }
+    },
+
     VariableDeclarator(path) {
       const { node } = path;
-      if (node.id.type !== 'Identifier' || !node.init) return;
+      if (!node.init) return;
 
       // Unwrap `await getTranslations(...)`
       const init = node.init.type === 'AwaitExpression' ? node.init.argument : node.init;
@@ -74,10 +90,48 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
       if (!matchedHook) return;
 
       const namespace = extractStaticNamespace(call.arguments[0]);
-      if (!namespace) return;
 
-      const binding = path.scope.getBinding(node.id.name);
-      if (binding) namespaceByBinding.set(binding, namespace);
+      // `const t = useTranslations("Namespace")`
+      if (node.id.type === 'Identifier') {
+        if (!namespace) return;
+        const binding = path.scope.getBinding(node.id.name);
+        if (binding) namespaceByBinding.set(binding, namespace);
+        return;
+      }
+
+      // `const { t, tc } = useFeatureI18n("Namespace")` — resolve the wrapper
+      // hook's own definition to find each returned property's real
+      // namespace (which may differ per property, e.g. a shared `tc`).
+      // Falls back to the call's own namespace for anything unresolved.
+      if (node.id.type === 'ObjectPattern') {
+        const wrapperInfo =
+          call.callee.type === 'Identifier'
+            ? resolveWrapperInfo(
+                options.file,
+                importedFrom,
+                call.callee.name,
+                parsedNamespaceFunctions,
+              )
+            : null;
+
+        for (const prop of node.id.properties) {
+          if (prop.type !== 'ObjectProperty' || prop.value.type !== 'Identifier') continue;
+          const propKey = prop.key.type === 'Identifier' ? prop.key.name : null;
+          const binding = path.scope.getBinding(prop.value.name);
+          if (!binding) continue;
+
+          const mapping = propKey ? wrapperInfo?.properties.get(propKey) : undefined;
+          if (mapping?.type === 'fixed') {
+            namespaceByBinding.set(binding, mapping.namespace);
+          } else if (mapping?.type === 'param') {
+            const argNamespace = extractStaticNamespace(call.arguments[mapping.index]);
+            if (argNamespace) namespaceByBinding.set(binding, argNamespace);
+            else if (namespace) namespaceByBinding.set(binding, namespace);
+          } else if (namespace) {
+            namespaceByBinding.set(binding, namespace);
+          }
+        }
+      }
     },
 
     CallExpression(path) {
@@ -140,6 +194,21 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
   };
 }
 
+function resolveWrapperInfo(
+  fromFile: string,
+  importedFrom: Map<string, { source: string; imported: string }>,
+  calleeName: string,
+  parsedNamespaceFunctions: ParsedFunctionSpec[],
+) {
+  const imp = importedFrom.get(calleeName);
+  if (!imp) return null;
+
+  const resolvedFile = resolveModuleSpecifier(fromFile, imp.source);
+  if (!resolvedFile) return null;
+
+  return resolveWrapperHook(resolvedFile, imp.imported, parsedNamespaceFunctions);
+}
+
 /**
  * Extracts translation keys from multiple files in parallel.
  */
@@ -166,89 +235,11 @@ export function mergeExtractedKeys(results: ExtractionResult[]): Set<string> {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-interface ParsedFunctionSpec {
-  raw: string;
-  type: 'identifier' | 'member';
-  /** For 'identifier': the function name */
-  name?: string;
-  /** For 'member': the object and property */
-  object?: string;
-  property?: string;
-}
-
-function parseFunctionSpec(spec: string): ParsedFunctionSpec {
-  const dot = spec.indexOf('.');
-  if (dot === -1) {
-    return { raw: spec, type: 'identifier', name: spec };
-  }
-  return {
-    raw: spec,
-    type: 'member',
-    object: spec.slice(0, dot),
-    property: spec.slice(dot + 1),
-  };
-}
-
-function matchesCallee(
-  callee: Expression | V8IntrinsicIdentifier,
-  fn: ParsedFunctionSpec,
-): boolean {
-  if (fn.type === 'identifier') {
-    return callee.type === 'Identifier' && callee.name === fn.name;
-  }
-
-  if (fn.type === 'member') {
-    return (
-      callee.type === 'MemberExpression' &&
-      !callee.computed &&
-      callee.object.type === 'Identifier' &&
-      callee.object.name === fn.object &&
-      callee.property.type === 'Identifier' &&
-      callee.property.name === fn.property
-    );
-  }
-
-  return false;
-}
-
 function shouldIgnoreKey(key: string, ignoredWords: string[], ignoredPatterns: string[]): boolean {
   if (!key.trim()) return true;
   if (ignoredWords.includes(key)) return true;
   if (matchesAnyPattern(key, ignoredPatterns)) return true;
   return false;
-}
-
-/**
- * Extracts a static namespace string from a namespace-hook call's first
- * argument, supporting both `useTranslations("Namespace")` and
- * `getTranslations({ namespace: "Namespace" })` shapes.
- */
-function extractStaticNamespace(
-  arg: Expression | SpreadElement | ArgumentPlaceholder | undefined,
-): string | undefined {
-  if (!arg || arg.type === 'ArgumentPlaceholder' || arg.type === 'SpreadElement') {
-    return undefined;
-  }
-
-  if (arg.type === 'StringLiteral') {
-    return arg.value;
-  }
-
-  if (arg.type === 'ObjectExpression') {
-    for (const prop of arg.properties) {
-      if (
-        prop.type === 'ObjectProperty' &&
-        !prop.computed &&
-        prop.key.type === 'Identifier' &&
-        prop.key.name === 'namespace' &&
-        prop.value.type === 'StringLiteral'
-      ) {
-        return prop.value.value;
-      }
-    }
-  }
-
-  return undefined;
 }
 
 function applyNamespace(key: string, namespace: string | undefined): string {

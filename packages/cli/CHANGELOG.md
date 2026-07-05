@@ -1,5 +1,20 @@
 # @ndnci/translify
 
+## 0.4.0
+
+### Minor Changes
+
+- Fix false positives in `check-unused`/`check-missing`/`audit` when a project
+  uses a custom wrapper hook that returns multiple translate functions bound to
+  different namespaces (e.g. `const { t, tc } = useFeatureI18n("WidgetPanel")` where
+  `tc` is internally hardcoded to a shared `"Shared"` namespace).
+
+  Instead of a config-level workaround, extraction now resolves the wrapper
+  hook's own definition — following relative imports and `tsconfig.json` path
+  aliases — and analyzes its body to determine each returned property's real
+  namespace. Add the wrapper's name to `extraction.namespace_functions` (same as
+  `useTranslations`/`getTranslations`) and it's handled automatically.
+
 ## 0.3.0
 
 ### Minor Changes

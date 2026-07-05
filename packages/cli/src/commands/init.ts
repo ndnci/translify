@@ -26,6 +26,8 @@ export default {
 
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
+    // Also recognizes your own custom wrapper hooks around useTranslations/
+    // getTranslations (e.g. useFeatureI18n) automatically — no config needed.
     namespace_functions: ['useTranslations', 'getTranslations'],
     ignored_words: ['OK', 'API', 'ID'],
     ignored_patterns: ['^v[0-9]+$'],

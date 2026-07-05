@@ -147,3 +147,65 @@ export async function serverFn() {
     expect(keys).toContain('hello');
   });
 });
+
+describe('extractFromFile (custom wrapper hooks, resolved cross-file)', () => {
+  const dir = join(tmpdir(), 'translify-test-wrapper-' + process.pid);
+  const hooksDir = join(dir, 'hooks');
+  const componentsDir = join(dir, 'components');
+  const hookFile = join(hooksDir, 'useFeatureI18n.ts');
+  const consumerFile = join(componentsDir, 'WidgetPanel.tsx');
+
+  beforeAll(() => {
+    mkdirSync(hooksDir, { recursive: true });
+    mkdirSync(componentsDir, { recursive: true });
+
+    // Mirrors a real wrapper hook: `t` inherits the caller's namespace,
+    // `tc` is hardcoded to a different, shared namespace.
+    writeFileSync(
+      hookFile,
+      `
+import { useTranslations } from 'next-intl';
+
+export function useFeatureI18n(featureNamespace: string) {
+  const t = useTranslations(featureNamespace);
+  const tc = useTranslations("Shared");
+  return { t, tc };
+}
+`,
+    );
+
+    writeFileSync(
+      consumerFile,
+      `
+import { useFeatureI18n } from '../hooks/useFeatureI18n';
+
+export function WidgetPanel() {
+  const { t, tc } = useFeatureI18n("WidgetPanel");
+  const placeholder = t("label.titlePlaceholder");
+  const shared = tc("helperText");
+  return <div>{placeholder}{shared}</div>;
+}
+`,
+    );
+  });
+
+  afterAll(() => {
+    unlinkSync(hookFile);
+    unlinkSync(consumerFile);
+  });
+
+  it("resolves each destructured property to the wrapper's own namespace, not the outer call's", () => {
+    const result = extractFromFile({
+      file: consumerFile,
+      translationFunctions: ['t', 'tc'],
+      namespaceFunctions: ['useTranslations', 'useFeatureI18n'],
+      ignoredWords: [],
+      ignoredPatterns: [],
+    });
+
+    const keys = result.entries.map((e) => e.key);
+    expect(keys).toContain('WidgetPanel.label.titlePlaceholder');
+    expect(keys).toContain('Shared.helperText');
+    expect(keys).not.toContain('WidgetPanel.helperText');
+  });
+});

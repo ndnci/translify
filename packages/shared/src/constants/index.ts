@@ -53,6 +53,6 @@ export const DEFAULT_SOURCE_EXCLUDE = [
 // Default translations directory pattern
 export const DEFAULT_TRANSLATION_FILES = ['messages/*.json', 'locales/*.json', 'i18n/*.json'];
 
-export const VERSION = '0.3.0';
+export const VERSION = '0.4.0';
 export const CLI_NAME = 'translify';
 export const PACKAGE_NAME = '@ndnci/translify';
