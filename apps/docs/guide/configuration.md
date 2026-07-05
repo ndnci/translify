@@ -46,8 +46,22 @@ export default defineConfig({
     // BCP 47 tag of your reference language
     default_language: 'en',
 
-    // Glob patterns pointing to JSON translation files
-    files: ['messages/*.json'],
+    // Glob patterns pointing to JSON translation files. Recursive globs support
+    // both `messages/en.json` and split files like `messages/en/auth.json`.
+    files: ['messages/**/*.json'],
+
+    // Used by `translify split` and by missing-key routing in split projects.
+    split: {
+      // Group by the first dot-key segment by default.
+      depth: 1,
+
+      // Strings are shorthand for `{ name: 'tools', match: ['tools'] }`.
+      // Object groups can match several substrings or regex patterns.
+      groups: [{ name: 'tools', match: ['tool'] }, 'auth'],
+
+      // Supported placeholders: `{language}` and `{group}`.
+      output_pattern: 'messages/{language}/{group}.json',
+    },
   },
 
   // ── Extraction ──────────────────────────────────────────────────────────
@@ -65,7 +79,7 @@ export default defineConfig({
     // single hook returns several functions bound to different namespaces.
     namespace_functions: ['useTranslations', 'getTranslations'],
 
-    // Exact words to never flag
+    // Exact words to never flag as translation keys or hardcoded text
     ignored_words: ['OK', 'API', 'ID'],
 
     // Regex patterns — strings matching any of these are ignored
@@ -111,7 +125,15 @@ export default defineConfig({
 ## Validation
 
 All config values are validated with Zod. Errors are reported with clear,
-human-readable messages pointing to the exact field that failed.
+human-readable messages pointing to the exact field that failed. Unknown keys
+are rejected too, so typos like `translation.files` instead of
+`translations.files` are caught early.
+
+Run validation directly with:
+
+```bash
+translify check-config
+```
 
 Example error:
 

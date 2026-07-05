@@ -209,3 +209,57 @@ export function WidgetPanel() {
     expect(keys).not.toContain('WidgetPanel.helperText');
   });
 });
+
+describe('extractFromFile (hardcoded text)', () => {
+  const dir = join(tmpdir(), 'translify-test-hardcoded-' + process.pid);
+  const file = join(dir, 'hardcoded.tsx');
+
+  beforeAll(() => {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      file,
+      `
+import { Button } from './Button';
+
+export function Page() {
+  const t = useTranslations("Home");
+  const serverT = getTranslations({ namespace: "ServerHome" });
+  return (
+    <main>
+      <h1>Welcome home</h1>
+      <button>Login</button>
+      <input placeholder="Search tools" className="rounded-md" />
+      <Button>{t("actions.save")}</Button>
+    </main>
+  );
+}
+`,
+    );
+  });
+
+  afterAll(() => {
+    unlinkSync(file);
+  });
+
+  it('detects visible hardcoded text without flagging translation keys or technical strings', () => {
+    const result = extractFromFile({
+      file,
+      translationFunctions: ['t'],
+      namespaceFunctions: ['useTranslations', 'getTranslations'],
+      ignoredWords: [],
+      ignoredPatterns: [],
+      detectHardcodedText: true,
+    });
+
+    const hardcoded = result.entries
+      .filter((entry) => entry.type === 'hardcoded-text')
+      .map((entry) => entry.key);
+
+    expect(hardcoded).toContain('Welcome home');
+    expect(hardcoded).toContain('Login');
+    expect(hardcoded).toContain('Search tools');
+    expect(hardcoded).not.toContain('./Button');
+    expect(hardcoded).not.toContain('actions.save');
+    expect(hardcoded).not.toContain('ServerHome');
+  });
+});

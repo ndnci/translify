@@ -30,11 +30,13 @@ hardest parts of i18n:
 
 - **Add missing keys** to translation files across languages, preserving
   existing formatting
+- **Split large translation files** into context files while still treating each
+  language as one catalogue
 - **Detect** unused, missing, duplicate, and cross-locale inconsistent
-  translation entries
+  translation entries, plus hardcoded user-facing text
 - **Translate** automatically via AI providers (OpenAI GPT-4)
 - **Audit** your entire i18n health in one command
-- **Optimize** translation files (sort, deduplicate, format)
+- **Fix** deterministic audit issues with `--dry-run` previews
 
 Built for teams that care about DX and translation quality.
 
@@ -66,7 +68,7 @@ translify audit
 ```
 
 Runs every check (missing, unused, duplicate values, duplicate keys,
-cross-locale inconsistencies) in one pass — great for CI.
+cross-locale inconsistencies, hardcoded text) in one pass — great for CI.
 
 ### Add missing keys
 
@@ -86,6 +88,17 @@ translify check-unused
 
 Finds translation keys defined in your JSON files but never referenced in code.
 
+### Split large files
+
+```bash
+translify split --dry-run
+translify split --groups tools=tool,auth=auth
+```
+
+Splits files such as `messages/en.json` into context files such as
+`messages/en/tools.json`, while audits and fixes continue to treat all files for
+one language as a single catalogue.
+
 ---
 
 ## Configuration
@@ -103,7 +116,12 @@ export default defineConfig({
 
   translations: {
     default_language: 'en',
-    files: ['messages/*.json'],
+    files: ['messages/**/*.json'],
+    split: {
+      depth: 1,
+      groups: [{ name: 'tools', match: ['tool'] }, 'auth'],
+      output_pattern: 'messages/{language}/{group}.json',
+    },
   },
 
   extraction: {
@@ -131,12 +149,17 @@ export default defineConfig({
 | ----------------------------- | --------------------------------------------------------- |
 | `translify init`              | Initialize a config file                                  |
 | `translify audit`             | Full i18n audit (all checks combined, alias `check-all`)  |
+| `translify check-config`      | Validate config values and unknown keys                   |
 | `translify add-missing`       | Add missing keys to translation files across languages    |
+| `translify add-languages`     | Create files for one or more new languages                |
+| `translify split`             | Split large translation files by context                  |
+| `translify fix`               | Fix deterministic audit issues                            |
 | `translify translate`         | Auto-translate missing keys via AI                        |
 | `translify check-missing`     | Detect missing translation keys                           |
 | `translify check-unused`      | Detect unused translation keys                            |
 | `translify check-duplicates`  | Detect duplicate translation values and duplicate keys    |
 | `translify check-consistency` | Detect keys missing in some locales but present in others |
+| `translify check-hardcoded`   | Detect hardcoded user-facing text                         |
 | `translify optimize`          | Optimize and format translation files                     |
 | `translify doctor`            | Check your Translify setup and environment                |
 | `translify version`           | Print the installed version and check for updates         |

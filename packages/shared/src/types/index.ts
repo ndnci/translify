@@ -122,6 +122,7 @@ export interface AuditResult {
   duplicateValues: DuplicateValueResult[];
   duplicateKeys: DuplicateKeyResult[];
   localeInconsistencies: LocaleInconsistencyResult[];
+  hardcodedText: ExtractionEntry[];
   totalFiles: number;
   totalKeys: number;
   totalUsedKeys: number;

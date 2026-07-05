@@ -47,6 +47,39 @@ describe('detectMissingKeys', () => {
     expect(keys).toContain('missing.key');
     expect(keys).not.toContain('home.title');
   });
+
+  it('checks all files for the same language as one catalogue', () => {
+    const files: TranslationFile[] = [
+      {
+        language: 'en',
+        path: '/messages/en/auth.json',
+        data: { auth: { login: 'Log in' } },
+      },
+      {
+        language: 'en',
+        path: '/messages/en/tools.json',
+        data: { tools: { title: 'Tools' } },
+      },
+    ];
+    const splitEntries: ExtractionEntry[] = [
+      {
+        key: 'auth.login',
+        file: 'src/page.tsx',
+        line: 1,
+        column: 0,
+        type: 'translation-call',
+      },
+      {
+        key: 'tools.title',
+        file: 'src/page.tsx',
+        line: 2,
+        column: 0,
+        type: 'translation-call',
+      },
+    ];
+
+    expect(detectMissingKeys(files, splitEntries)).toEqual([]);
+  });
 });
 
 describe('detectDuplicateValues', () => {
@@ -134,5 +167,32 @@ describe('detectLocaleInconsistencies', () => {
 
   it('returns nothing for a single-locale project', () => {
     expect(detectLocaleInconsistencies([en], 'en')).toEqual([]);
+  });
+
+  it('compares merged split files per locale', () => {
+    const files: TranslationFile[] = [
+      {
+        language: 'en',
+        path: '/messages/en/auth.json',
+        data: { auth: { login: 'Log in' } },
+      },
+      {
+        language: 'en',
+        path: '/messages/en/tools.json',
+        data: { tools: { title: 'Tools' } },
+      },
+      {
+        language: 'fr',
+        path: '/messages/fr/auth.json',
+        data: { auth: { login: 'Connexion' } },
+      },
+      {
+        language: 'fr',
+        path: '/messages/fr/tools.json',
+        data: { tools: { title: 'Outils' } },
+      },
+    ];
+
+    expect(detectLocaleInconsistencies(files, 'en')).toEqual([]);
   });
 });

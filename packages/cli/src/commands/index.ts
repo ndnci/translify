@@ -1,5 +1,8 @@
+export { registerAddLanguagesCommand } from './add-languages.js';
 export { registerInitCommand } from './init.js';
 export { registerAddMissingCommand } from './add-missing.js';
+export { registerCheckConfigCommand } from './check-config.js';
+export { registerCheckHardcodedCommand } from './check-hardcoded.js';
 export { registerTranslateCommand } from './translate.js';
 export { registerCheckUnusedCommand } from './check-unused.js';
 export { registerCheckMissingCommand } from './check-missing.js';
@@ -7,6 +10,8 @@ export { registerCheckDuplicatesCommand } from './check-duplicates.js';
 export { registerCheckConsistencyCommand } from './check-consistency.js';
 export { registerOptimizeCommand } from './optimize.js';
 export { registerAuditCommand } from './audit.js';
+export { registerFixCommand } from './fix.js';
+export { registerSplitCommand } from './split.js';
 export { registerDoctorCommand } from './doctor.js';
 export { registerUpgradeCommand } from './upgrade.js';
 export { registerVersionCommand } from './version.js';

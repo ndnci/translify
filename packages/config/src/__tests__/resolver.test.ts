@@ -47,4 +47,33 @@ describe('validateConfig', () => {
       }),
     ).toThrow(ConfigValidationError);
   });
+
+  it('throws ConfigValidationError for unknown config keys', () => {
+    expect(() =>
+      validateConfig({
+        translations: {
+          default_language: 'en',
+          files: ['messages/**/*.json'],
+          typo_split: {},
+        } as never,
+      }),
+    ).toThrow(ConfigValidationError);
+  });
+
+  it('accepts split options for multi-file translation projects', () => {
+    const config = validateConfig({
+      translations: {
+        default_language: 'en',
+        files: ['messages/**/*.json'],
+        split: {
+          depth: 1,
+          groups: ['tools', { name: 'auth', match: ['auth', 'login'] }],
+          output_pattern: 'messages/{language}/{group}.json',
+        },
+      },
+    });
+
+    expect(config.translations.split.depth).toBe(1);
+    expect(config.translations.split.groups).toHaveLength(2);
+  });
 });

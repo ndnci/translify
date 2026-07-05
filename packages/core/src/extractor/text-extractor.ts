@@ -1,5 +1,5 @@
 import _traverse from '@babel/traverse';
-import type { Binding } from '@babel/traverse';
+import type { Binding, NodePath } from '@babel/traverse';
 import type { StringLiteral, TemplateLiteral } from '@babel/types';
 import {
   type ExtractionEntry,
@@ -40,6 +40,8 @@ export interface ExtractOptions {
   ignoredWords: string[];
   /** Regex patterns to ignore */
   ignoredPatterns: string[];
+  /** Also detect user-facing text that is not wrapped in a translation call */
+  detectHardcodedText?: boolean;
 }
 
 // ─── Main extractor ────────────────────────────────────────────────────────────
@@ -64,6 +66,24 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
 
   // `import { useFeatureI18n } from '../hooks/useFeatureI18n'` -> local name -> source
   const importedFrom = new Map<string, { source: string; imported: string }>();
+
+  const addHardcodedEntry = (
+    text: string,
+    loc: { line?: number; column?: number } | null | undefined,
+  ) => {
+    const normalized = normalizeHardcodedText(text);
+    if (!normalized) return;
+    if (shouldIgnoreHardcodedText(normalized, options.ignoredWords, options.ignoredPatterns))
+      return;
+
+    entries.push({
+      key: normalized,
+      file: options.file,
+      line: loc?.line ?? 0,
+      column: loc?.column ?? 0,
+      type: 'hardcoded-text',
+    });
+  };
 
   traverse(ast, {
     ImportDeclaration(path) {
@@ -185,6 +205,18 @@ export function extractFromFile(options: ExtractOptions): ExtractionResult {
         }
       }
     },
+
+    JSXText(path) {
+      if (!options.detectHardcodedText) return;
+      addHardcodedEntry(path.node.value, path.node.loc?.start);
+    },
+
+    StringLiteral(path) {
+      if (!options.detectHardcodedText) return;
+      if (isTranslationArgument(path, parsedFunctions, parsedNamespaceFunctions)) return;
+      if (isTechnicalStringLiteral(path)) return;
+      addHardcodedEntry(path.node.value, path.node.loc?.start);
+    },
   });
 
   return {
@@ -239,6 +271,90 @@ function shouldIgnoreKey(key: string, ignoredWords: string[], ignoredPatterns: s
   if (!key.trim()) return true;
   if (ignoredWords.includes(key)) return true;
   if (matchesAnyPattern(key, ignoredPatterns)) return true;
+  return false;
+}
+
+function normalizeHardcodedText(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function shouldIgnoreHardcodedText(
+  value: string,
+  ignoredWords: string[],
+  ignoredPatterns: string[],
+): boolean {
+  if (!value.trim()) return true;
+  if (ignoredWords.includes(value)) return true;
+  if (matchesAnyPattern(value, ignoredPatterns)) return true;
+  if (!/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(value)) return true;
+  if (/^[\w.-]+$/.test(value) && /[._-]/.test(value)) return true;
+  if (/^[#./?&=:~@%+\w-]+$/.test(value) && /[#./?&=:~@%+]/.test(value)) return true;
+  return false;
+}
+
+function isTranslationArgument(
+  path: NodePath<StringLiteral>,
+  parsedFunctions: ParsedFunctionSpec[],
+  parsedNamespaceFunctions: ParsedFunctionSpec[],
+): boolean {
+  const parent = path.parent;
+  if (parent.type === 'CallExpression' && parent.arguments[0] === path.node) {
+    return [...parsedFunctions, ...parsedNamespaceFunctions].some((fn) =>
+      matchesCallee(parent.callee, fn),
+    );
+  }
+
+  if (parent.type === 'ObjectProperty' && parent.value === path.node) {
+    const keyName =
+      parent.key.type === 'Identifier'
+        ? parent.key.name
+        : parent.key.type === 'StringLiteral'
+          ? parent.key.value
+          : null;
+
+    const call = path.findParent((parentPath) => parentPath.isCallExpression())?.node;
+    if (keyName === 'namespace' && call?.type === 'CallExpression') {
+      return parsedNamespaceFunctions.some((fn) => matchesCallee(call.callee, fn));
+    }
+  }
+
+  return false;
+}
+
+function isTechnicalStringLiteral(path: NodePath<StringLiteral>): boolean {
+  const parent = path.parent;
+
+  if (
+    parent.type === 'ImportDeclaration' ||
+    parent.type === 'ExportAllDeclaration' ||
+    parent.type === 'ExportNamedDeclaration' ||
+    parent.type === 'Directive' ||
+    parent.type === 'TSLiteralType'
+  ) {
+    return true;
+  }
+
+  if (parent.type === 'ObjectProperty' && parent.key === path.node) return true;
+  if (parent.type === 'MemberExpression' && parent.property === path.node) return true;
+
+  if (parent.type === 'JSXAttribute') {
+    const attrName =
+      parent.name.type === 'JSXIdentifier'
+        ? parent.name.name
+        : `${parent.name.namespace.name}:${parent.name.name.name}`;
+
+    const visibleAttributes = new Set([
+      'alt',
+      'aria-label',
+      'label',
+      'placeholder',
+      'title',
+      'value',
+    ]);
+
+    return !visibleAttributes.has(attrName);
+  }
+
   return false;
 }
 

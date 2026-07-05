@@ -8,7 +8,7 @@ import {
   loadTranslationFile,
   syncTranslationFiles,
 } from '@ndnci/translify-core';
-import { relativePath } from '@ndnci/translify-shared';
+import { relativePath, type TranslationFile } from '@ndnci/translify-shared';
 import type { CliLogger } from '../ui/logger.js';
 import { createSpinner } from '../ui/spinner.js';
 import { c } from '../ui/colors.js';
@@ -95,6 +95,9 @@ function makeAction(program: Command, logger: CliLogger) {
 
       const extractedKeys = mergeExtractedKeys(extractResults);
       const translationFiles = translationPaths.map(loadTranslationFile);
+      const defaultFiles = translationFiles.filter(
+        (file) => file.language === config.translations.default_language,
+      );
 
       spinner.update('Adding missing keys…');
 
@@ -103,6 +106,8 @@ function makeAction(program: Command, logger: CliLogger) {
         files: translationFiles,
         defaultLanguage: config.translations.default_language,
         ...(opts.empty !== undefined && { useEmptyForMissing: opts.empty }),
+        resolveTargetFile: (key, language, files) =>
+          resolveTargetFile(key, language, files, defaultFiles),
         dryRun,
       });
 
@@ -143,4 +148,24 @@ function makeAction(program: Command, logger: CliLogger) {
       process.exit(1);
     }
   };
+}
+
+function resolveTargetFile(
+  key: string,
+  language: string,
+  languageFiles: TranslationFile[],
+  defaultFiles: TranslationFile[],
+): string {
+  const root = key.split('.')[0] ?? key;
+  const existing = languageFiles.find((file) => Object.hasOwn(file.data, root));
+  if (existing) return existing.path;
+
+  const defaultFile = defaultFiles.find((file) => Object.hasOwn(file.data, root));
+  if (defaultFile) {
+    return defaultFile.path
+      .replace(`/${defaultFile.language}/`, `/${language}/`)
+      .replace(`/${defaultFile.language}.json`, `/${language}.json`);
+  }
+
+  return languageFiles[0]?.path ?? '';
 }

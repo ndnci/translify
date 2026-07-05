@@ -51,7 +51,7 @@ export default defineConfig({
   },
   translations: {
     default_language: 'en',
-    files: ['messages/*.json'],
+    files: ['messages/**/*.json'],
   },
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],

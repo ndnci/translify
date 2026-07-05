@@ -59,4 +59,9 @@ describe('extractLanguageFromPath', () => {
     expect(extractLanguageFromPath('messages/en.json')).toBe('en');
     expect(extractLanguageFromPath('locales/pt-BR.json')).toBe('pt-BR');
   });
+
+  it('extracts language from split locale directories', () => {
+    expect(extractLanguageFromPath('/app/messages/en/tools.json')).toBe('en');
+    expect(extractLanguageFromPath('/app/messages/fr/auth/login.json')).toBe('fr');
+  });
 });

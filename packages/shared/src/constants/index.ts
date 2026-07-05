@@ -50,9 +50,15 @@ export const DEFAULT_SOURCE_EXCLUDE = [
   '**/.turbo/**',
 ];
 
-// Default translations directory pattern
-export const DEFAULT_TRANSLATION_FILES = ['messages/*.json', 'locales/*.json', 'i18n/*.json'];
+// Default translations directory pattern. The recursive globs support both
+// single-file locales (`messages/en.json`) and split locales
+// (`messages/en/auth.json`, `messages/en/tools.json`).
+export const DEFAULT_TRANSLATION_FILES = [
+  'messages/**/*.json',
+  'locales/**/*.json',
+  'i18n/**/*.json',
+];
 
-export const VERSION = '0.4.0';
+export const VERSION = '0.5.0';
 export const CLI_NAME = 'translify';
 export const PACKAGE_NAME = '@ndnci/translify';

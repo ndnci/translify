@@ -28,7 +28,7 @@ export function registerAuditCommand(program: Command, logger: CliLogger): void 
     .command('audit')
     .alias('check-all')
     .description(
-      'Full i18n health audit — runs every check in one pass (missing, unused, duplicate values, duplicate keys, locale consistency)',
+      'Full i18n health audit — runs every check in one pass (missing, unused, duplicates, locale consistency, hardcoded text)',
     )
     .option('--output <file>', 'write the report to a file (.json or plain text)')
     .addHelpText(
@@ -67,16 +67,24 @@ ${c.dim('Examples:')}
             ...config.extraction.ignored_patterns,
             ...config.extraction.custom_regex_patterns,
           ],
+          detectHardcodedText: true,
         });
 
-        const usedKeys = mergeExtractedKeys(extractResults);
         const allEntries = extractResults.flatMap((r) => r.entries);
+        const translationEntries = allEntries.filter((entry) => entry.type === 'translation-call');
+        const hardcodedText = allEntries.filter((entry) => entry.type === 'hardcoded-text');
+        const usedKeys = mergeExtractedKeys(
+          extractResults.map((result) => ({
+            ...result,
+            entries: result.entries.filter((entry) => entry.type === 'translation-call'),
+          })),
+        );
         const translationFiles = translationPaths.map(loadTranslationFile);
 
         spinner.update('Running detection checks…');
 
         const unusedKeys = detectUnusedKeys(translationFiles, usedKeys);
-        const missingKeys = detectMissingKeys(translationFiles, allEntries);
+        const missingKeys = detectMissingKeys(translationFiles, translationEntries);
         const duplicateValues = detectDuplicateValues(translationFiles);
         const duplicateKeys = detectDuplicateKeys(translationFiles);
         const localeInconsistencies = detectLocaleInconsistencies(
@@ -91,7 +99,16 @@ ${c.dim('Examples:')}
           missingKeys.length > 0 ||
           duplicateValues.length > 0 ||
           duplicateKeys.length > 0 ||
-          localeInconsistencies.length > 0;
+          localeInconsistencies.length > 0 ||
+          hardcodedText.length > 0;
+
+        const issueCount =
+          unusedKeys.length +
+          missingKeys.length +
+          duplicateValues.length +
+          duplicateKeys.length +
+          localeInconsistencies.length +
+          hardcodedText.length;
 
         if (opts.output) {
           writeReport(opts.output, {
@@ -103,6 +120,7 @@ ${c.dim('Examples:')}
             duplicateValues,
             duplicateKeys,
             localeInconsistencies,
+            hardcodedText,
           });
         }
 
@@ -129,6 +147,7 @@ ${c.dim('Examples:')}
           { label: 'Duplicate values', count: duplicateValues.length },
           { label: 'Duplicate keys', count: duplicateKeys.length },
           { label: 'Locale inconsistencies', count: localeInconsistencies.length },
+          { label: 'Hardcoded text', count: hardcodedText.length },
         ];
 
         logger.section('Checks');
@@ -183,6 +202,24 @@ ${c.dim('Examples:')}
           }
         }
 
+        if (duplicateValues.length > 0) {
+          logger.section('Duplicate values');
+          for (const dup of duplicateValues.slice(0, 20)) {
+            process.stdout.write(
+              `  ${c.warn_sym} ${c.lang(`[${dup.language}]`)} ${c.dim(`"${dup.value.slice(0, 60)}"`)}\n`,
+            );
+            for (const key of dup.keys.slice(0, 8)) {
+              process.stdout.write(`    ${c.dot} ${c.key(key)}\n`);
+            }
+            if (dup.keys.length > 8) {
+              process.stdout.write(c.dim(`    … and ${dup.keys.length - 8} more keys\n`));
+            }
+          }
+          if (duplicateValues.length > 20) {
+            process.stdout.write(c.dim(`  … and ${duplicateValues.length - 20} more\n`));
+          }
+        }
+
         if (localeInconsistencies.length > 0) {
           logger.section('Locale inconsistencies');
           for (const inc of localeInconsistencies.slice(0, 20)) {
@@ -195,11 +232,25 @@ ${c.dim('Examples:')}
           }
         }
 
+        if (hardcodedText.length > 0) {
+          logger.section('Hardcoded text');
+          for (const entry of hardcodedText.slice(0, 20)) {
+            process.stdout.write(
+              `  ${c.warn_sym} ${c.dim(`"${entry.key.slice(0, 80)}"`)}  ${c.dim(relativePath(entry.file, cwd) + ':' + entry.line)}\n`,
+            );
+          }
+          if (hardcodedText.length > 20) {
+            process.stdout.write(c.dim(`  … and ${hardcodedText.length - 20} more\n`));
+          }
+        }
+
         // ── Final verdict ───────────────────────────────────────────────────
 
         logger.spacer();
         if (hasIssues) {
-          logger.warn('Audit found issues. Review the output above.');
+          logger.warn(
+            `Audit found ${issueCount} issue${issueCount !== 1 ? 's' : ''}. Review the output above.`,
+          );
         } else {
           logger.success('Audit passed — all i18n checks clean!');
         }

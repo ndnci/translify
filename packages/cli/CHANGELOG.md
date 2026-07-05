@@ -1,5 +1,25 @@
 # @ndnci/translify
 
+## 0.5.0
+
+### Minor Changes
+
+- Add strict config validation and a new `check-config` command that catches
+  unknown keys, typos, invalid values, and load errors.
+- Add split-file translation support. Translation globs now default to
+  recursive JSON files, audits merge all files for the same language, and
+  `split`/`extract` can break large locale files into context files with custom
+  grouping rules such as `tools=tool`.
+- Add `check-hardcoded` and include hardcoded user-facing text in `audit`, with
+  config-driven ignored words and regex patterns.
+- Add `fix` for deterministic audit fixes: missing keys, unused keys, duplicate
+  key declarations, and locale consistency gaps, all with `--dry-run`,
+  `--include`, and `--exclude`.
+- Add `add-languages`/`add-locales` to create one or more new languages from the
+  default language, preserving single-file or split-file layouts and supporting
+  empty values via `--empty`.
+- Improve audit output with duplicate-value details and a final issue count.
+
 ## 0.4.0
 
 ### Minor Changes

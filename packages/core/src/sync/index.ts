@@ -1,5 +1,7 @@
 export {
+  addTranslationKeys,
   loadTranslationFile,
+  removeTranslationKeys,
   writeTranslationFile,
   syncTranslationFiles,
 } from './translation-sync.js';

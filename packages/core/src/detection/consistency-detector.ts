@@ -1,6 +1,8 @@
 import {
   type TranslationFile,
+  type TranslationRecord,
   type LocaleInconsistencyResult,
+  deepMerge,
   flattenTranslations,
 } from '@ndnci/translify-shared';
 
@@ -18,9 +20,16 @@ export function detectLocaleInconsistencies(
 ): LocaleInconsistencyResult[] {
   if (translationFiles.length < 2) return [];
 
-  const flatByLanguage = new Map<string, Record<string, string>>();
+  const dataByLanguage = new Map<string, TranslationRecord>();
+
   for (const file of translationFiles) {
-    flatByLanguage.set(file.language, flattenTranslations(file.data));
+    const current = dataByLanguage.get(file.language) ?? {};
+    dataByLanguage.set(file.language, deepMerge(current, file.data));
+  }
+
+  const flatByLanguage = new Map<string, Record<string, string>>();
+  for (const [language, data] of dataByLanguage) {
+    flatByLanguage.set(language, flattenTranslations(data));
   }
 
   const allKeys = new Set<string>();

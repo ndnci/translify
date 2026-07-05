@@ -1,6 +1,8 @@
 import {
   type TranslationFile,
+  type TranslationRecord,
   type DuplicateValueResult,
+  deepMerge,
   flattenTranslations,
 } from '@ndnci/translify-shared';
 
@@ -12,9 +14,17 @@ import {
  */
 export function detectDuplicateValues(translationFiles: TranslationFile[]): DuplicateValueResult[] {
   const results: DuplicateValueResult[] = [];
+  const filesByLanguage = new Map<string, TranslationFile[]>();
 
   for (const file of translationFiles) {
-    const flat = flattenTranslations(file.data);
+    const list = filesByLanguage.get(file.language) ?? [];
+    list.push(file);
+    filesByLanguage.set(file.language, list);
+  }
+
+  for (const [language, files] of filesByLanguage) {
+    const merged = files.reduce<TranslationRecord>((acc, file) => deepMerge(acc, file.data), {});
+    const flat = flattenTranslations(merged);
 
     // Group keys by their value
     const valueToKeys = new Map<string, string[]>();
@@ -35,8 +45,8 @@ export function detectDuplicateValues(translationFiles: TranslationFile[]): Dupl
         results.push({
           value,
           keys,
-          language: file.language,
-          file: file.path,
+          language,
+          file: files[0]!.path,
         });
       }
     }

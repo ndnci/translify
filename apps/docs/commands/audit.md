@@ -20,6 +20,7 @@ translify audit --output report.json
 | Duplicate values       | Multiple keys sharing the same translated string      |
 | Duplicate keys         | The same key declared twice in one raw JSON file      |
 | Locale inconsistencies | A key present in one locale but missing from another  |
+| Hardcoded text         | User-facing text not wrapped in translation calls     |
 
 ## Example output
 
@@ -39,13 +40,14 @@ translify audit --output report.json
   Duplicate values        0
   Duplicate keys          0
   Locale inconsistencies  2
+  Hardcoded text          3
 
 ▸ Unused keys
   ⚠ [en] old.navbar.home
   ⚠ [en] deprecated.footer.link
   …
 
-⚠ Audit found issues. Review the output above.
+⚠ Audit found 17 issues. Review the output above.
 ```
 
 ## Exit code
@@ -67,3 +69,10 @@ This makes it safe to use in CI pipelines:
 | `--cwd`           | Working directory                                       |
 | `--verbose`       | Show all details                                        |
 | `--output <file>` | Write the full report to a file (`.json` or plain text) |
+
+## Notes
+
+For split translation projects, all files for the same language are treated as
+one logical catalogue. For example, `messages/en/auth.json` and
+`messages/en/tools.json` are checked together before Translify reports a key as
+missing from `en`.

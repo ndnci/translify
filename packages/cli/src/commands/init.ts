@@ -21,7 +21,15 @@ export default {
 
   translations: {
     default_language: 'en',
-    files: ['messages/*.json'],
+    files: ['messages/**/*.json'],
+    split: {
+      depth: 1,
+      groups: [
+        // { name: 'tools', match: ['tool'] },
+        // { name: 'auth', match: ['auth', 'login', 'signup'] },
+      ],
+      output_pattern: 'messages/{language}/{group}.json',
+    },
   },
 
   extraction: {

@@ -28,7 +28,7 @@ translify doctor
   ✓ Node.js 22.4.0
   ✓ Config found: translify.config.ts
   ✗ Translation files (0 found)
-    No files matched: messages/*.json
+    No files matched: messages/**/*.json
   ✗ AI provider: openai
     API key missing — set openai_api_key or OPENAI_API_KEY env var
 

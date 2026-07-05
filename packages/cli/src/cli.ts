@@ -4,14 +4,19 @@ import { createLogger } from './ui/logger.js';
 import { c } from './ui/colors.js';
 import {
   registerInitCommand,
+  registerAddLanguagesCommand,
   registerAddMissingCommand,
   registerTranslateCommand,
+  registerCheckConfigCommand,
+  registerCheckHardcodedCommand,
   registerCheckUnusedCommand,
   registerCheckMissingCommand,
   registerCheckDuplicatesCommand,
   registerCheckConsistencyCommand,
   registerOptimizeCommand,
   registerAuditCommand,
+  registerFixCommand,
+  registerSplitCommand,
   registerDoctorCommand,
   registerUpgradeCommand,
   registerVersionCommand,
@@ -43,11 +48,16 @@ ${c.dim('Checks (read-only):')}
   ${c.brand('check-unused')}       Keys defined in translation files but unused in code
   ${c.brand('check-duplicates')}   Duplicate values and duplicate keys in translation files
   ${c.brand('check-consistency')}  Keys not mirrored across every locale
+  ${c.brand('check-hardcoded')}    User-facing text that is hardcoded in source files
+  ${c.brand('check-config')}       Validate config shape, values, and unknown keys
   ${c.brand('audit')}              Run every check above in one pass (alias: check-all)
 
 ${c.dim('Actions:')}
   ${c.brand('init')}          Initialize a config file
   ${c.brand('add-missing')}   Add keys used in code but missing from translation files
+  ${c.brand('add-languages')} Create translation files for new languages
+  ${c.brand('split')}         Split large locale files by context (alias: extract)
+  ${c.brand('fix')}           Fix deterministic audit issues
   ${c.brand('translate')}     Auto-translate via AI
   ${c.brand('optimize')}      Sort keys and flag empty entries in translation files
   ${c.brand('doctor')}        Check setup and environment
@@ -57,6 +67,9 @@ ${c.dim('Actions:')}
 ${c.dim('Examples:')}
   ${c.dim('$')} translify init
   ${c.dim('$')} translify audit
+  ${c.dim('$')} translify split --groups tools=tool,auth=auth
+  ${c.dim('$')} translify add-languages it de --empty
+  ${c.dim('$')} translify fix --dry-run
   ${c.dim('$')} translify add-missing --dry-run
   ${c.dim('$')} translify check-consistency --output report.json
 
@@ -70,15 +83,20 @@ ${c.dim('Documentation:')} https://ndnci.github.io/translify/commands/
   const getLogger = () =>
     createLogger({ verbose: program.opts<{ verbose: boolean }>().verbose ?? false });
 
+  registerCheckConfigCommand(program, getLogger());
   registerInitCommand(program, getLogger());
+  registerAddLanguagesCommand(program, getLogger());
   registerAddMissingCommand(program, getLogger());
   registerTranslateCommand(program, getLogger());
+  registerCheckHardcodedCommand(program, getLogger());
   registerCheckUnusedCommand(program, getLogger());
   registerCheckMissingCommand(program, getLogger());
   registerCheckDuplicatesCommand(program, getLogger());
   registerCheckConsistencyCommand(program, getLogger());
   registerOptimizeCommand(program, getLogger());
   registerAuditCommand(program, getLogger());
+  registerFixCommand(program, getLogger());
+  registerSplitCommand(program, getLogger());
   registerDoctorCommand(program, getLogger());
   registerUpgradeCommand(program, getLogger());
   registerVersionCommand(program, getLogger());

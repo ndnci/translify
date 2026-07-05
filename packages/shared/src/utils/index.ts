@@ -118,8 +118,28 @@ export function matchesAnyPattern(value: string, patterns: string[]): boolean {
  * Example: "messages/en.json" → "en"
  */
 export function extractLanguageFromPath(filePath: string): string {
-  const basename = filePath.split('/').pop() ?? filePath;
-  return basename.replace(/\.json$/, '');
+  const normalized = filePath.replace(/\\/g, '/');
+  const parts = normalized.split('/').filter(Boolean);
+  const basename = parts.at(-1) ?? normalized;
+  const basenameWithoutExtension = basename.replace(/\.json$/, '');
+
+  if (isLikelyLanguageTag(basenameWithoutExtension)) {
+    return basenameWithoutExtension;
+  }
+
+  for (let i = parts.length - 2; i >= 0; i--) {
+    const segment = parts[i]!;
+    if (isLikelyLanguageTag(segment)) return segment;
+  }
+
+  return basenameWithoutExtension;
+}
+
+/**
+ * Best-effort BCP 47-ish language tag check for path inference.
+ */
+export function isLikelyLanguageTag(value: string): boolean {
+  return /^[a-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/.test(value);
 }
 
 /**

@@ -1,12 +1,15 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { modify, applyEdits, type FormattingOptions } from 'jsonc-parser';
 import {
   type TranslationFile,
   type TranslationRecord,
   type SyncResult,
   TranslationFileError,
+  deepMerge,
   flattenTranslations,
   extractLanguageFromPath,
+  unflattenTranslations,
 } from '@ndnci/translify-shared';
 
 // ─── I/O ──────────────────────────────────────────────────────────────────────
@@ -88,6 +91,45 @@ export function writeTranslationFileSurgical(
   writeFileSync(filePath, text, 'utf8');
 }
 
+/**
+ * Adds keys to an existing translation file surgically, or creates a new file
+ * when split-file routing points to a file that does not exist yet.
+ */
+export function addTranslationKeys(filePath: string, additions: Record<string, string>): void {
+  if (Object.keys(additions).length === 0) return;
+
+  if (!existsSync(filePath)) {
+    mkdirSync(dirname(filePath), { recursive: true });
+    writeTranslationFile(filePath, unflattenTranslations(additions));
+    return;
+  }
+
+  const rawText = readFileSync(filePath, 'utf8');
+  writeTranslationFileSurgical(filePath, rawText, additions);
+}
+
+/**
+ * Removes flat dot-notation keys from a JSON translation file while preserving
+ * unrelated formatting as much as jsonc-parser allows.
+ */
+export function removeTranslationKeys(filePath: string, keys: string[]): void {
+  if (keys.length === 0 || !existsSync(filePath)) return;
+
+  let text = readFileSync(filePath, 'utf8');
+  const formattingOptions = detectFormattingOptions(text);
+
+  for (const key of keys) {
+    const edits = modify(text, key.split('.'), undefined, {
+      formattingOptions,
+      getInsertionIndex: () => 0,
+    });
+    text = applyEdits(text, edits);
+  }
+
+  if (!text.endsWith('\n')) text += formattingOptions.eol;
+  writeFileSync(filePath, text, 'utf8');
+}
+
 // ─── Sync ─────────────────────────────────────────────────────────────────────
 
 export interface SyncOptions {
@@ -102,6 +144,11 @@ export interface SyncOptions {
    * When false, copies the value from the default-language file.
    */
   useEmptyForMissing?: boolean;
+  /**
+   * Optional callback used by split-file projects to route a missing key to a
+   * specific translation file.
+   */
+  resolveTargetFile?: (key: string, language: string, files: TranslationFile[]) => string;
   dryRun?: boolean;
 }
 
@@ -113,15 +160,19 @@ export interface SyncOptions {
  * - Does NOT remove unused keys (use `unusedDetector` for that)
  */
 export function syncTranslationFiles(options: SyncOptions): SyncResult[] {
-  const results: SyncResult[] = [];
+  const resultsByFile = new Map<string, SyncResult>();
+  const filesByLanguage = groupFilesByLanguage(options.files);
 
   const defaultFile = options.files.find((f) => f.language === options.defaultLanguage);
-  const defaultFlat = defaultFile ? flattenTranslations(defaultFile.data) : {};
+  const defaultFlat = defaultFile
+    ? flattenTranslations(mergeTranslationFiles(filesByLanguage.get(options.defaultLanguage) ?? []))
+    : {};
 
-  for (const file of options.files) {
-    const flat = flattenTranslations(file.data);
+  for (const [language, files] of filesByLanguage) {
+    const flat = flattenTranslations(mergeTranslationFiles(files));
     const added: string[] = [];
     const unchanged: string[] = [];
+    const additionsByFile = new Map<string, Record<string, string>>();
 
     for (const key of options.extractedKeys) {
       if (key in flat) {
@@ -129,30 +180,66 @@ export function syncTranslationFiles(options: SyncOptions): SyncResult[] {
       } else {
         // Use the default language value if available; otherwise empty string
         const value =
-          !options.useEmptyForMissing && file.language !== options.defaultLanguage
+          !options.useEmptyForMissing && language !== options.defaultLanguage
             ? (defaultFlat[key] ?? '')
             : '';
-        flat[key] = value;
+        const targetFile =
+          options.resolveTargetFile?.(key, language, files) ?? resolveDefaultTargetFile(key, files);
+        const additions = additionsByFile.get(targetFile) ?? {};
+        additions[key] = value;
+        additionsByFile.set(targetFile, additions);
         added.push(key);
       }
     }
 
-    if (added.length > 0 && !options.dryRun) {
-      const additions: Record<string, string> = {};
-      for (const key of added) additions[key] = flat[key]!;
+    for (const [filePath, additions] of additionsByFile) {
+      if (!options.dryRun) {
+        addTranslationKeys(filePath, additions);
+      }
 
-      const rawText = readFileSync(file.path, 'utf8');
-      writeTranslationFileSurgical(file.path, rawText, additions);
+      const result = resultsByFile.get(filePath) ?? {
+        language,
+        file: filePath,
+        added: [],
+        removed: [],
+        unchanged: 0,
+      };
+      result.added.push(...Object.keys(additions));
+      resultsByFile.set(filePath, result);
     }
 
-    results.push({
-      language: file.language,
-      file: file.path,
-      added,
-      removed: [],
-      unchanged: unchanged.length,
-    });
+    for (const file of files) {
+      const result = resultsByFile.get(file.path) ?? {
+        language,
+        file: file.path,
+        added: [],
+        removed: [],
+        unchanged: 0,
+      };
+      result.unchanged += unchanged.length;
+      resultsByFile.set(file.path, result);
+    }
   }
 
-  return results;
+  return [...resultsByFile.values()].sort((a, b) => a.file.localeCompare(b.file));
+}
+
+function groupFilesByLanguage(files: TranslationFile[]): Map<string, TranslationFile[]> {
+  const byLanguage = new Map<string, TranslationFile[]>();
+  for (const file of files) {
+    const list = byLanguage.get(file.language) ?? [];
+    list.push(file);
+    byLanguage.set(file.language, list);
+  }
+  return byLanguage;
+}
+
+function mergeTranslationFiles(files: TranslationFile[]): TranslationRecord {
+  return files.reduce<TranslationRecord>((merged, file) => deepMerge(merged, file.data), {});
+}
+
+function resolveDefaultTargetFile(key: string, files: TranslationFile[]): string {
+  const root = key.split('.')[0] ?? key;
+  const existing = files.find((file) => Object.hasOwn(file.data, root));
+  return existing?.path ?? files[0]?.path ?? '';
 }

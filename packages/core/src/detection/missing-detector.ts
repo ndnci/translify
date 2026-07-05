@@ -2,6 +2,7 @@ import {
   type TranslationFile,
   type MissingKeyResult,
   type ExtractionEntry,
+  deepMerge,
   flattenTranslations,
 } from '@ndnci/translify-shared';
 
@@ -14,16 +15,25 @@ export function detectMissingKeys(
   extractedEntries: ExtractionEntry[],
 ): MissingKeyResult[] {
   const results: MissingKeyResult[] = [];
+  const filesByLanguage = new Map<string, TranslationFile[]>();
 
   for (const file of translationFiles) {
-    const defined = new Set(Object.keys(flattenTranslations(file.data)));
+    const list = filesByLanguage.get(file.language) ?? [];
+    list.push(file);
+    filesByLanguage.set(file.language, list);
+  }
+
+  for (const [language, files] of filesByLanguage) {
+    const merged = files.reduce((acc, file) => deepMerge(acc, file.data), {});
+    const defined = new Set(Object.keys(flattenTranslations(merged)));
+    const fallbackFile = files[0]!;
 
     for (const entry of extractedEntries) {
       if (!defined.has(entry.key)) {
         results.push({
           key: entry.key,
-          language: file.language,
-          file: file.path,
+          language,
+          file: fallbackFile.path,
           sourceFile: entry.file,
           sourceLine: entry.line,
         });
@@ -34,7 +44,7 @@ export function detectMissingKeys(
   // Deduplicate: same key missing from same file (multiple usages in source)
   const seen = new Set<string>();
   return results.filter((r) => {
-    const sig = `${r.key}::${r.file}`;
+    const sig = `${r.key}::${r.language}`;
     if (seen.has(sig)) return false;
     seen.add(sig);
     return true;

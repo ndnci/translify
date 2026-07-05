@@ -11,73 +11,112 @@ import {
 
 // ─── Source ────────────────────────────────────────────────────────────────────
 
-const SourceSchema = z.object({
-  /** Glob patterns for source files to scan */
-  include: z.array(z.string()).default(DEFAULT_SOURCE_INCLUDE),
-  /** Glob patterns to exclude from scanning */
-  exclude: z.array(z.string()).default(DEFAULT_SOURCE_EXCLUDE),
-});
+const SourceSchema = z
+  .object({
+    /** Glob patterns for source files to scan */
+    include: z.array(z.string()).default(DEFAULT_SOURCE_INCLUDE),
+    /** Glob patterns to exclude from scanning */
+    exclude: z.array(z.string()).default(DEFAULT_SOURCE_EXCLUDE),
+  })
+  .strict();
 
 // ─── Translations ──────────────────────────────────────────────────────────────
 
-const TranslationsSchema = z.object({
-  /** BCP 47 language tag of the reference language (source of truth) */
-  default_language: z.string().default('en'),
-  /** Glob patterns pointing to JSON translation files */
-  files: z.array(z.string()).default(DEFAULT_TRANSLATION_FILES),
-});
+const SplitGroupSchema = z
+  .object({
+    /** Output file name without `.json`, e.g. "tools" */
+    name: z.string().min(1),
+    /** Case-insensitive substrings or regex patterns matched against top-level keys */
+    match: z.array(z.string()).default([]),
+  })
+  .strict();
+
+const TranslationSplitSchema = z
+  .object({
+    /**
+     * Dot-key depth used for default grouping.
+     * depth=1 turns `auth.login.title` into `auth.json`.
+     */
+    depth: z.number().int().min(1).default(1),
+    /**
+     * Optional custom groups. A string is shorthand for
+     * `{ name: "tools", match: ["tools"] }`.
+     */
+    groups: z.array(z.union([z.string(), SplitGroupSchema])).default([]),
+    /**
+     * Output path pattern. Supported placeholders:
+     * `{language}` and `{group}`.
+     */
+    output_pattern: z.string().optional(),
+  })
+  .strict();
+
+const TranslationsSchema = z
+  .object({
+    /** BCP 47 language tag of the reference language (source of truth) */
+    default_language: z.string().default('en'),
+    /** Glob patterns pointing to JSON translation files */
+    files: z.array(z.string()).default(DEFAULT_TRANSLATION_FILES),
+    /** Options used by the `split` command and missing-key routing */
+    split: TranslationSplitSchema.default({}),
+  })
+  .strict();
 
 // ─── Extraction ────────────────────────────────────────────────────────────────
 
-const ExtractionSchema = z.object({
-  /**
-   * Function names (or member expressions) to treat as translation calls.
-   *
-   * Example: ["t", "i18n.t", "translate", "$t"]
-   */
-  translation_functions: z.array(z.string()).default(DEFAULT_TRANSLATION_FUNCTIONS),
+const ExtractionSchema = z
+  .object({
+    /**
+     * Function names (or member expressions) to treat as translation calls.
+     *
+     * Example: ["t", "i18n.t", "translate", "$t"]
+     */
+    translation_functions: z.array(z.string()).default(DEFAULT_TRANSLATION_FUNCTIONS),
 
-  /**
-   * Namespace-hook function names whose static first argument (or `namespace`
-   * property, for `getTranslations({ namespace: '...' })`-style calls)
-   * establishes a key prefix for the translation function it returns.
-   *
-   * Example: `const t = useTranslations("CommonMessage")` then `t("save")`
-   * extracts the key `CommonMessage.save`, not just `save`.
-   */
-  namespace_functions: z.array(z.string()).default(DEFAULT_NAMESPACE_FUNCTIONS),
+    /**
+     * Namespace-hook function names whose static first argument (or `namespace`
+     * property, for `getTranslations({ namespace: '...' })`-style calls)
+     * establishes a key prefix for the translation function it returns.
+     *
+     * Example: `const t = useTranslations("CommonMessage")` then `t("save")`
+     * extracts the key `CommonMessage.save`, not just `save`.
+     */
+    namespace_functions: z.array(z.string()).default(DEFAULT_NAMESPACE_FUNCTIONS),
 
-  /** Exact words to never flag as hardcoded text */
-  ignored_words: z.array(z.string()).default(DEFAULT_IGNORED_WORDS),
+    /** Exact words to never flag as hardcoded text */
+    ignored_words: z.array(z.string()).default(DEFAULT_IGNORED_WORDS),
 
-  /**
-   * Regex patterns — strings matching any of these are ignored during
-   * hardcoded-text detection (key extraction is unaffected).
-   */
-  ignored_patterns: z.array(z.string()).default(DEFAULT_IGNORED_PATTERNS),
+    /**
+     * Regex patterns — strings matching any of these are ignored during
+     * hardcoded-text detection (key extraction is unaffected).
+     */
+    ignored_patterns: z.array(z.string()).default(DEFAULT_IGNORED_PATTERNS),
 
-  /** Additional custom regex patterns to ignore */
-  custom_regex_patterns: z.array(z.string()).default([]),
+    /** Additional custom regex patterns to ignore */
+    custom_regex_patterns: z.array(z.string()).default([]),
 
-  /** Include JSDoc / inline comments in output reports */
-  include_comments: z.boolean().default(false),
-});
+    /** Include JSDoc / inline comments in output reports */
+    include_comments: z.boolean().default(false),
+  })
+  .strict();
 
 // ─── Detection ────────────────────────────────────────────────────────────────
 
-const DetectionSchema = z.object({
-  /**
-   * Ignore files whose content contains any of these strings.
-   * Useful for auto-generated files.
-   */
-  ignore_files_containing: z.array(z.string()).default([]),
+const DetectionSchema = z
+  .object({
+    /**
+     * Ignore files whose content contains any of these strings.
+     * Useful for auto-generated files.
+     */
+    ignore_files_containing: z.array(z.string()).default([]),
 
-  /** Ignore files whose path contains any of these substrings */
-  ignore_paths_containing: z.array(z.string()).default([]),
+    /** Ignore files whose path contains any of these substrings */
+    ignore_paths_containing: z.array(z.string()).default([]),
 
-  /** Ignore files whose basename matches any of these regex patterns */
-  ignore_filenames_matching: z.array(z.string()).default([]),
-});
+    /** Ignore files whose basename matches any of these regex patterns */
+    ignore_filenames_matching: z.array(z.string()).default([]),
+  })
+  .strict();
 
 // ─── AI Translation ───────────────────────────────────────────────────────────
 
@@ -106,6 +145,7 @@ const AITranslationSchema = z
     /** Maximum number of keys to translate per API call */
     batch_size: z.number().int().min(1).max(500).default(50),
   })
+  .strict()
   .superRefine((data, ctx) => {
     if (data.enabled && data.provider === 'openai' && !data.openai_api_key) {
       ctx.addIssue({
@@ -120,13 +160,15 @@ const AITranslationSchema = z
 
 // ─── Root Config ──────────────────────────────────────────────────────────────
 
-export const TranslifyConfigSchema = z.object({
-  source: SourceSchema.default({}),
-  translations: TranslationsSchema.default({}),
-  extraction: ExtractionSchema.default({}),
-  detection: DetectionSchema.default({}),
-  ai_translation: AITranslationSchema.default({}),
-});
+export const TranslifyConfigSchema = z
+  .object({
+    source: SourceSchema.default({}),
+    translations: TranslationsSchema.default({}),
+    extraction: ExtractionSchema.default({}),
+    detection: DetectionSchema.default({}),
+    ai_translation: AITranslationSchema.default({}),
+  })
+  .strict();
 
 export type TranslifyConfig = z.infer<typeof TranslifyConfigSchema>;
 export type TranslifyConfigInput = z.input<typeof TranslifyConfigSchema>;
