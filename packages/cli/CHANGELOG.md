@@ -1,5 +1,12 @@
 # @ndnci/translify
 
+## 0.5.1
+
+### Patch Changes
+
+- Add the Translify logo to the README and documentation site, and fix broken
+  logo/favicon references that previously pointed to a nonexistent `logo.svg`.
+
 ## 0.5.0
 
 ### Minor Changes

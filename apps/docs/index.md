@@ -7,7 +7,7 @@ hero:
   tagline:
     Extract, sync, detect, and auto-translate your app — from a single command.
   image:
-    src: /logo.svg
+    src: /logo.png
     alt: Translify
   actions:
     - theme: brand

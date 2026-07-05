@@ -39,9 +39,8 @@ logo. The software itself is MIT-licensed, but trademark rights are separate.
 2. **Rename and rebrand** — you may not take the Translify source code and
    redistribute it under the "Translify" name as if it were your own product.
 
-3. **Use the logo without permission** — the Translify logo (when released) may
-   not be used in products, marketing materials, or merchandise without written
-   permission.
+3. **Use the logo without permission** — the Translify logo may not be used in
+   products, marketing materials, or merchandise without written permission.
 
 4. **Imply official affiliation** — you may not use the trademark in a way that
    implies official endorsement by the Translify project unless you have

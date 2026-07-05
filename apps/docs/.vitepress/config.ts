@@ -7,14 +7,15 @@ export default defineConfig({
   base: '/translify/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/logo.png' }],
     ['meta', { name: 'og:type', content: 'website' }],
     ['meta', { name: 'og:title', content: 'Translify' }],
     ['meta', { name: 'og:description', content: 'Intelligent i18n CLI for modern web apps' }],
+    ['meta', { name: 'og:image', content: 'https://ndnci.github.io/translify/logo.png' }],
   ],
 
   themeConfig: {
-    logo: '/logo.svg',
+    logo: '/logo.png',
     siteTitle: 'Translify',
 
     nav: [
