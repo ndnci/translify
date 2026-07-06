@@ -198,7 +198,9 @@ export class OpenRouterProvider extends BaseTranslationProvider {
 
     const missing = Object.keys(request.entries).filter((k) => !(k in translations));
     if (missing.length > 0) {
-      this.throwProviderError(`${label} response is missing keys: ${missing.join(', ')}`);
+      this.throwProviderError(
+        this.incompleteKeyedResponseMessage(label, missing, Object.keys(request.entries).length),
+      );
     }
 
     return Object.fromEntries(
@@ -226,7 +228,7 @@ export class OpenRouterProvider extends BaseTranslationProvider {
     const keys = Object.keys(request.entries);
     if (!items || items.length !== keys.length) {
       this.throwProviderError(
-        `Translation response must contain ${keys.length} values in order, received ${items?.length ?? 'none'}.`,
+        this.incompleteValuesResponseMessage(keys.length, items?.length ?? 'none'),
       );
     }
 

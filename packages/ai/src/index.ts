@@ -5,4 +5,5 @@ export type {
   TranslateFileResult,
   TranslateProgressEvent,
   TranslateProgressFile,
+  TranslateCheckpointOptions,
 } from './translator.js';

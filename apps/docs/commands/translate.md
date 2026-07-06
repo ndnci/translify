@@ -26,6 +26,10 @@ translify translate --all
 
 # Keep the old compact spinner-only progress output
 translify translate --no-details
+
+# Force checkpoint behavior for interrupted/failed runs
+translify translate --resume
+translify translate --restart
 ```
 
 ## How it works
@@ -47,12 +51,27 @@ merged reference-language catalogue.
 | `--locale <lang>` | Only translate a specific language           |
 | `--all`           | Re-translate all keys, not just missing ones |
 | `--no-details`    | Use compact spinner-only progress output     |
+| `--resume`        | Resume a saved translate checkpoint          |
+| `--restart`       | Discard a saved checkpoint and start fresh   |
 | `--dry-run`       | Preview without writing                      |
 | `-c, --config`    | Path to config file                          |
 
 By default, `translate` shows a detailed progress view grouped by locale, with
 one progress bar per translation file and counts like `(126/2396)` for
 translated keys versus total keys to translate.
+
+## Resume failed translations
+
+During a real translation run, Translify writes completed batches to
+`.translify/translate-checkpoint.json`. If the provider returns an incomplete
+response, the network fails, or the process is interrupted, rerun the same
+command to resume from the saved checkpoint instead of retranslating completed
+batches.
+
+In an interactive terminal, Translify asks whether to resume. In non-interactive
+environments it resumes automatically when the checkpoint matches the same
+command/config/files. Use `--resume` to force resume, or `--restart` to discard
+the checkpoint and start over. The checkpoint is removed after a successful run.
 
 ## Providers
 

@@ -1,4 +1,8 @@
 import type { Command } from 'commander';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, unlinkSync } from 'node:fs';
+import { join } from 'node:path';
+import { createInterface } from 'node:readline/promises';
 import { resolveConfig } from '@ndnci/translify-config';
 import { scanTranslationFiles, loadTranslationFile } from '@ndnci/translify-core';
 import {
@@ -19,6 +23,8 @@ export function registerTranslateCommand(program: Command, logger: CliLogger): v
     .option('--locale <lang>', 'only translate a specific language (e.g. fr, de, pt-BR)')
     .option('--all', 'translate all keys, not just missing ones')
     .option('--no-details', 'use the compact spinner-only progress output')
+    .option('--resume', 'resume a saved translate checkpoint without prompting')
+    .option('--restart', 'discard any saved translate checkpoint and start fresh')
     .addHelpText(
       'after',
       `
@@ -28,134 +34,299 @@ ${c.dim('Examples:')}
   ${c.brand('$')} translify translate --locale fr --dry-run
   ${c.brand('$')} translify translate --all
   ${c.brand('$')} translify translate --no-details
+  ${c.brand('$')} translify translate --resume
+  ${c.brand('$')} translify translate --restart
 `,
     )
-    .action(async (opts: { locale?: string; all?: boolean; details?: boolean }) => {
-      const {
-        cwd,
-        config: configPath,
-        dryRun,
-        verbose,
-      } = program.opts<{
-        cwd: string;
-        config?: string;
-        dryRun: boolean;
-        verbose: boolean;
-      }>();
+    .action(
+      async (opts: {
+        locale?: string;
+        all?: boolean;
+        details?: boolean;
+        resume?: boolean;
+        restart?: boolean;
+      }) => {
+        const {
+          cwd,
+          config: configPath,
+          dryRun,
+          verbose,
+        } = program.opts<{
+          cwd: string;
+          config?: string;
+          dryRun: boolean;
+          verbose: boolean;
+        }>();
 
-      const spinner = createSpinner('Loading config…');
-      let spinnerActive = true;
-      let progress: TranslationProgressRenderer | undefined;
+        const spinner = createSpinner('Loading config…');
+        let spinnerActive = true;
+        let progress: TranslationProgressRenderer | undefined;
 
-      try {
-        const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
+        try {
+          const { config } = await resolveConfig({ cwd, ...(configPath && { configPath }) });
 
-        if (!config.ai_translation.enabled) {
-          spinner.fail('AI translation is disabled');
-          logger.warn(
-            'Set ai_translation.enabled = true in your translify.config.ts to use this command.',
+          if (!config.ai_translation.enabled) {
+            spinner.fail('AI translation is disabled');
+            logger.warn(
+              'Set ai_translation.enabled = true in your translify.config.ts to use this command.',
+            );
+            process.exit(1);
+          }
+
+          spinner.update('Initializing AI provider…');
+          const provider = createProvider(config.ai_translation);
+
+          spinner.update('Checking AI provider…');
+          await provider.healthCheck();
+
+          spinner.update('Loading translation files…');
+          const translationPaths = await scanTranslationFiles(config, cwd);
+          const translationFiles = translationPaths.map(loadTranslationFile);
+
+          const targetLocales = opts.locale ? [opts.locale] : undefined;
+          const showDetails = opts.details !== false;
+          const checkpointPath = join(cwd, '.translify', 'translate-checkpoint.json');
+          const checkpointSignature = createTranslateCheckpointSignature({
+            provider: config.ai_translation.provider,
+            model: config.ai_translation.model,
+            defaultLanguage: config.translations.default_language,
+            targetLocales,
+            onlyMissing: !opts.all,
+            batchSize: config.ai_translation.batch_size,
+            valuesOnly: config.ai_translation.values_only,
+            verify: config.ai_translation.verify,
+            verifyModel: config.ai_translation.verify_model,
+            translationFiles,
+          });
+          const resumeCheckpoint = dryRun
+            ? false
+            : await resolveCheckpointResume({
+                checkpointPath,
+                checkpointSignature,
+                restart: opts.restart === true,
+                resume: opts.resume === true,
+                logger,
+                stopSpinner: () => {
+                  if (spinnerActive) {
+                    spinner.stop();
+                    spinnerActive = false;
+                  }
+                },
+              });
+
+          spinner.update('Translating…');
+          if (showDetails) {
+            spinner.stop();
+            spinnerActive = false;
+            progress = new TranslationProgressRenderer(cwd);
+          }
+
+          const results = await translateMissingKeys(provider, {
+            files: translationFiles,
+            defaultLanguage: config.translations.default_language,
+            ...(targetLocales && { targetLanguages: targetLocales }),
+            onlyMissing: !opts.all,
+            batchSize: config.ai_translation.batch_size,
+            valuesOnly: config.ai_translation.values_only,
+            verify: config.ai_translation.verify,
+            ...(config.ai_translation.verify_model && {
+              verifyModel: config.ai_translation.verify_model,
+            }),
+            dryRun,
+            ...(progress && { onProgress: progress.handle }),
+            ...(!dryRun && {
+              checkpoint: {
+                path: checkpointPath,
+                signature: checkpointSignature,
+                resume: resumeCheckpoint,
+              },
+            }),
+          });
+
+          const totalTranslated = results.reduce((s, r) => s + r.translatedKeys, 0);
+          const totalPromptTokens = results.reduce((s, r) => s + (r.usage?.promptTokens ?? 0), 0);
+          const totalCompletionTokens = results.reduce(
+            (s, r) => s + (r.usage?.completionTokens ?? 0),
+            0,
           );
+          const totalTokens = results.reduce((s, r) => s + (r.usage?.totalTokens ?? 0), 0);
+          const totalCost = results.reduce((s, r) => s + (r.usage?.costUsd ?? 0), 0);
+          const hasUsage = results.some((r) => r.usage);
+          const hasCost = results.some((r) => r.usage?.costUsd !== undefined);
+
+          progress?.finish();
+
+          const successMessage = dryRun
+            ? `[dry-run] Would translate ${totalTranslated} keys`
+            : `Translated ${totalTranslated} keys via ${config.ai_translation.provider}`;
+
+          if (spinnerActive) {
+            spinner.succeed(successMessage);
+          } else {
+            logger.success(successMessage);
+          }
+
+          logger.spacer();
+          logger.section('Translation results');
+
+          for (const result of results) {
+            const rel = relativePath(result.file, cwd);
+            process.stdout.write(
+              `  ${c.lang(result.language.padEnd(8))} ${c.file(rel)}  ` +
+                `${c.success(`${result.translatedKeys} translated`)}  ` +
+                `${c.dim(`${result.skippedKeys} skipped`)}` +
+                formatUsage(result.usage) +
+                '\n',
+            );
+          }
+
+          if (hasUsage) {
+            logger.spacer();
+            logger.section('AI usage');
+            process.stdout.write(
+              `  ${c.dim('Prompt tokens:')} ${totalPromptTokens.toLocaleString()}\n` +
+                `  ${c.dim('Completion tokens:')} ${totalCompletionTokens.toLocaleString()}\n` +
+                `  ${c.dim('Total tokens:')} ${totalTokens.toLocaleString()}\n`,
+            );
+            if (hasCost) {
+              process.stdout.write(`  ${c.dim('Total cost:')} ${formatUsd(totalCost)}\n`);
+            }
+          }
+
+          logger.spacer();
+        } catch (err) {
+          progress?.finish();
+          if (spinnerActive) {
+            spinner.fail('Translation failed');
+          } else {
+            logger.error('Translation failed');
+          }
+          logger.error((err as Error).message);
+          if (verbose) logger.debug(String(err));
           process.exit(1);
         }
+      },
+    );
+}
 
-        spinner.update('Initializing AI provider…');
-        const provider = createProvider(config.ai_translation);
+interface TranslateCheckpointMetadata {
+  version?: number;
+  signature?: string;
+  updatedAt?: string;
+  files?: Record<string, { translations?: Record<string, string>; totalKeys?: number }>;
+}
 
-        spinner.update('Checking AI provider…');
-        await provider.healthCheck();
+interface CheckpointResumeOptions {
+  checkpointPath: string;
+  checkpointSignature: string;
+  restart: boolean;
+  resume: boolean;
+  logger: CliLogger;
+  stopSpinner(): void;
+}
 
-        spinner.update('Loading translation files…');
-        const translationPaths = await scanTranslationFiles(config, cwd);
-        const translationFiles = translationPaths.map(loadTranslationFile);
+async function resolveCheckpointResume(options: CheckpointResumeOptions): Promise<boolean> {
+  if (!existsSync(options.checkpointPath)) return false;
 
-        const targetLocales = opts.locale ? [opts.locale] : undefined;
-        const showDetails = opts.details !== false;
+  if (options.restart) {
+    options.stopSpinner();
+    unlinkSync(options.checkpointPath);
+    options.logger.info('Discarded saved translate checkpoint.');
+    return false;
+  }
 
-        spinner.update('Translating…');
-        if (showDetails) {
-          spinner.stop();
-          spinnerActive = false;
-          progress = new TranslationProgressRenderer(cwd);
-        }
+  const checkpoint = readCheckpointMetadata(options.checkpointPath);
+  if (!checkpoint || checkpoint.signature !== options.checkpointSignature) {
+    options.stopSpinner();
+    options.logger.warn(
+      'Found a saved translate checkpoint for a different command/config. Starting fresh.',
+    );
+    return false;
+  }
 
-        const results = await translateMissingKeys(provider, {
-          files: translationFiles,
-          defaultLanguage: config.translations.default_language,
-          ...(targetLocales && { targetLanguages: targetLocales }),
-          onlyMissing: !opts.all,
-          batchSize: config.ai_translation.batch_size,
-          valuesOnly: config.ai_translation.values_only,
-          verify: config.ai_translation.verify,
-          ...(config.ai_translation.verify_model && {
-            verifyModel: config.ai_translation.verify_model,
-          }),
-          dryRun,
-          ...(progress && { onProgress: progress.handle }),
-        });
+  if (options.resume) return true;
 
-        const totalTranslated = results.reduce((s, r) => s + r.translatedKeys, 0);
-        const totalPromptTokens = results.reduce((s, r) => s + (r.usage?.promptTokens ?? 0), 0);
-        const totalCompletionTokens = results.reduce(
-          (s, r) => s + (r.usage?.completionTokens ?? 0),
-          0,
-        );
-        const totalTokens = results.reduce((s, r) => s + (r.usage?.totalTokens ?? 0), 0);
-        const totalCost = results.reduce((s, r) => s + (r.usage?.costUsd ?? 0), 0);
-        const hasUsage = results.some((r) => r.usage);
-        const hasCost = results.some((r) => r.usage?.costUsd !== undefined);
+  const summary = checkpointSummary(checkpoint);
+  if (!process.stdin.isTTY) {
+    options.stopSpinner();
+    options.logger.info(`Resuming saved translate checkpoint${summary}.`);
+    return true;
+  }
 
-        progress?.finish();
+  options.stopSpinner();
+  return promptYesNo(`Resume saved translate checkpoint${summary}?`, true);
+}
 
-        const successMessage = dryRun
-          ? `[dry-run] Would translate ${totalTranslated} keys`
-          : `Translated ${totalTranslated} keys via ${config.ai_translation.provider}`;
+function readCheckpointMetadata(path: string): TranslateCheckpointMetadata | undefined {
+  try {
+    return JSON.parse(readFileSync(path, 'utf8')) as TranslateCheckpointMetadata;
+  } catch {
+    return undefined;
+  }
+}
 
-        if (spinnerActive) {
-          spinner.succeed(successMessage);
-        } else {
-          logger.success(successMessage);
-        }
+function checkpointSummary(checkpoint: TranslateCheckpointMetadata): string {
+  const files = Object.values(checkpoint.files ?? {});
+  const translated = files.reduce(
+    (sum, file) => sum + Object.keys(file.translations ?? {}).length,
+    0,
+  );
+  const total = files.reduce((sum, file) => sum + (file.totalKeys ?? 0), 0);
+  const count = total > 0 ? ` (${translated.toLocaleString()}/${total.toLocaleString()} keys)` : '';
+  const updatedAt = checkpoint.updatedAt ? ` from ${checkpoint.updatedAt}` : '';
+  return `${count}${updatedAt}`;
+}
 
-        logger.spacer();
-        logger.section('Translation results');
+async function promptYesNo(question: string, defaultYes: boolean): Promise<boolean> {
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    const suffix = defaultYes ? '[Y/n]' : '[y/N]';
+    const answer = (await rl.question(`${question} ${suffix} `)).trim().toLowerCase();
+    if (!answer) return defaultYes;
+    return answer === 'y' || answer === 'yes';
+  } finally {
+    rl.close();
+  }
+}
 
-        for (const result of results) {
-          const rel = relativePath(result.file, cwd);
-          process.stdout.write(
-            `  ${c.lang(result.language.padEnd(8))} ${c.file(rel)}  ` +
-              `${c.success(`${result.translatedKeys} translated`)}  ` +
-              `${c.dim(`${result.skippedKeys} skipped`)}` +
-              formatUsage(result.usage) +
-              '\n',
-          );
-        }
+function createTranslateCheckpointSignature(input: {
+  provider: string;
+  model: string;
+  defaultLanguage: string;
+  targetLocales: string[] | undefined;
+  onlyMissing: boolean;
+  batchSize: number;
+  valuesOnly: boolean;
+  verify: boolean;
+  verifyModel: string | undefined;
+  translationFiles: ReturnType<typeof loadTranslationFile>[];
+}): string {
+  const referenceFiles = input.translationFiles
+    .filter((file) => file.language === input.defaultLanguage)
+    .map((file) => ({ path: file.path, data: file.data }))
+    .sort((a, b) => a.path.localeCompare(b.path));
+  const targetFiles = input.translationFiles
+    .filter((file) => file.language !== input.defaultLanguage)
+    .map((file) => ({ language: file.language, path: file.path }))
+    .sort((a, b) => a.path.localeCompare(b.path));
 
-        if (hasUsage) {
-          logger.spacer();
-          logger.section('AI usage');
-          process.stdout.write(
-            `  ${c.dim('Prompt tokens:')} ${totalPromptTokens.toLocaleString()}\n` +
-              `  ${c.dim('Completion tokens:')} ${totalCompletionTokens.toLocaleString()}\n` +
-              `  ${c.dim('Total tokens:')} ${totalTokens.toLocaleString()}\n`,
-          );
-          if (hasCost) {
-            process.stdout.write(`  ${c.dim('Total cost:')} ${formatUsd(totalCost)}\n`);
-          }
-        }
-
-        logger.spacer();
-      } catch (err) {
-        progress?.finish();
-        if (spinnerActive) {
-          spinner.fail('Translation failed');
-        } else {
-          logger.error('Translation failed');
-        }
-        logger.error((err as Error).message);
-        if (verbose) logger.debug(String(err));
-        process.exit(1);
-      }
-    });
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        provider: input.provider,
+        model: input.model,
+        defaultLanguage: input.defaultLanguage,
+        targetLocales: input.targetLocales ?? null,
+        onlyMissing: input.onlyMissing,
+        batchSize: input.batchSize,
+        valuesOnly: input.valuesOnly,
+        verify: input.verify,
+        verifyModel: input.verifyModel ?? null,
+        referenceFiles,
+        targetFiles,
+      }),
+    )
+    .digest('hex');
 }
 
 interface DisplayProgressFile extends TranslateProgressFile {

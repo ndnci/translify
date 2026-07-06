@@ -59,6 +59,42 @@ export abstract class BaseTranslationProvider {
   protected throwProviderError(message: string, cause?: unknown): never {
     throw new AIProviderError(this.name, formatProviderError(message, cause), cause);
   }
+
+  protected incompleteKeyedResponseMessage(
+    label: string,
+    missingKeys: string[],
+    totalKeys: number,
+  ): string {
+    const missingPreview = formatListPreview(missingKeys, 30);
+    return (
+      `${label} response was incomplete: ${missingKeys.length}/${totalKeys} keys were missing.\n\n` +
+      `Missing keys: ${missingPreview}\n\n` +
+      'This usually means the model stopped early or truncated a large JSON response. ' +
+      'No translations from this incomplete batch were written.\n\n' +
+      'Try one of these fixes:\n' +
+      '  - reduce ai_translation.batch_size (for example 10, or 5 for long legal/FAQ text)\n' +
+      '  - enable ai_translation.values_only to make provider responses shorter\n' +
+      '  - use a model with a larger output limit or stronger JSON reliability\n' +
+      '  - rerun the same command to resume from the saved checkpoint, if one was created'
+    );
+  }
+
+  protected incompleteValuesResponseMessage(expected: number, received: number | 'none'): string {
+    return (
+      `Translation response was incomplete: expected ${expected} translated values, received ${received}.\n\n` +
+      'This usually means the model stopped early or returned the wrong JSON shape. ' +
+      'No translations from this incomplete batch were written.\n\n' +
+      'Try reducing ai_translation.batch_size or using a model with a larger output limit. ' +
+      'Then rerun the same command to resume from the saved checkpoint, if one was created.'
+    );
+  }
+}
+
+function formatListPreview(values: string[], limit: number): string {
+  const visible = values.slice(0, limit);
+  const remaining = values.length - visible.length;
+  const suffix = remaining > 0 ? `, ...and ${remaining} more` : '';
+  return `${visible.join(', ')}${suffix}`;
 }
 
 function formatProviderError(message: string, cause: unknown): string {

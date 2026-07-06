@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { join } from 'node:path';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import {
   BaseTranslationProvider,
   type TranslationRequest,
@@ -9,8 +11,18 @@ import { translateMissingKeys, type TranslateProgressEvent } from './translator.
 
 class FakeProvider extends BaseTranslationProvider {
   readonly name = 'fake';
+  calls = 0;
+
+  constructor(private readonly failOnCall?: number) {
+    super();
+  }
 
   async translate(request: TranslationRequest): Promise<TranslationResponse> {
+    this.calls += 1;
+    if (this.failOnCall === this.calls) {
+      throw new Error('simulated provider failure');
+    }
+
     return {
       provider: this.name,
       translations: Object.fromEntries(
@@ -74,6 +86,61 @@ describe('translateMissingKeys', () => {
           totalKeys: 1,
         },
       ],
+    });
+  });
+
+  it('saves completed batches and resumes from checkpoint after a failed run', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'translify-resume-'));
+    const messagesDir = join(cwd, 'messages');
+    mkdirSync(messagesDir, { recursive: true });
+    const checkpointPath = join(cwd, '.translify', 'translate-checkpoint.json');
+    const targetPath = join(messagesDir, 'fr.json');
+    const files = [
+      {
+        language: 'en',
+        path: join(messagesDir, 'en.json'),
+        data: { one: 'One', two: 'Two', three: 'Three' },
+      },
+      {
+        language: 'fr',
+        path: targetPath,
+        data: {},
+      },
+    ];
+
+    await expect(
+      translateMissingKeys(new FakeProvider(2), {
+        defaultLanguage: 'en',
+        batchSize: 1,
+        files,
+        checkpoint: {
+          path: checkpointPath,
+          signature: 'same-command',
+        },
+      }),
+    ).rejects.toThrow('simulated provider failure');
+
+    expect(existsSync(checkpointPath)).toBe(true);
+    expect(readFileSync(checkpointPath, 'utf8')).toContain('"one": "One translated"');
+
+    const provider = new FakeProvider();
+    await translateMissingKeys(provider, {
+      defaultLanguage: 'en',
+      batchSize: 1,
+      files,
+      checkpoint: {
+        path: checkpointPath,
+        signature: 'same-command',
+        resume: true,
+      },
+    });
+
+    expect(provider.calls).toBe(2);
+    expect(existsSync(checkpointPath)).toBe(false);
+    expect(JSON.parse(readFileSync(targetPath, 'utf8'))).toEqual({
+      one: 'One translated',
+      two: 'Two translated',
+      three: 'Three translated',
     });
   });
 });

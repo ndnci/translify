@@ -13,7 +13,15 @@ import {
 import { OpenAIProvider } from './providers/openai-provider.js';
 import { OpenRouterProvider } from './providers/openrouter-provider.js';
 import type { TranslifyConfig } from '@ndnci/translify-config';
-import { writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname } from 'node:path';
 
 export interface TranslateOptions {
   /** Translation files to translate */
@@ -35,6 +43,8 @@ export interface TranslateOptions {
   dryRun?: boolean;
   /** Called as files and batches move through translation */
   onProgress?: (event: TranslateProgressEvent) => void;
+  /** Persist completed batches so failed/interrupted runs can resume */
+  checkpoint?: TranslateCheckpointOptions;
 }
 
 export interface TranslateFileResult {
@@ -59,6 +69,30 @@ export type TranslateProgressEvent =
   | { type: 'file-complete'; file: TranslateProgressFile }
   | { type: 'complete'; files: TranslateProgressFile[] };
 
+export interface TranslateCheckpointOptions {
+  path: string;
+  /** Stable identifier for this command/config/file set */
+  signature: string;
+  /** Reuse saved translated batches when true */
+  resume?: boolean;
+}
+
+interface TranslateCheckpoint {
+  version: 1;
+  signature: string;
+  createdAt: string;
+  updatedAt: string;
+  files: Record<string, TranslateCheckpointFile>;
+}
+
+interface TranslateCheckpointFile {
+  language: string;
+  file: string;
+  totalKeys: number;
+  translations: Record<string, string>;
+  completed: boolean;
+}
+
 interface TranslateFilePlan {
   language: string;
   file: string;
@@ -67,7 +101,7 @@ interface TranslateFilePlan {
   referenceFlat: Record<string, string>;
   keys: string[];
   toTranslate: Record<string, string>;
-  translatedKeys: number;
+  completedKeys: Set<string>;
   usage?: TranslationUsage;
 }
 
@@ -125,6 +159,7 @@ export async function translateMissingKeys(
     }
     return true;
   });
+  const checkpoint = loadCheckpoint(options);
 
   const plans = targets.map((file): TranslateFilePlan => {
     const fileFlat = flattenTranslations(file.data);
@@ -144,6 +179,17 @@ export async function translateMissingKeys(
       toTranslate[key] = sourceValue;
     }
 
+    const saved = checkpoint?.files[file.path];
+    const completedKeys = new Set(
+      saved && saved.totalKeys === Object.keys(toTranslate).length
+        ? Object.keys(saved.translations).filter((key) => key in toTranslate)
+        : [],
+    );
+
+    if (saved) {
+      Object.assign(fileFlat, pickTranslations(saved.translations, completedKeys));
+    }
+
     return {
       language: file.language,
       file: file.path,
@@ -152,9 +198,12 @@ export async function translateMissingKeys(
       referenceFlat,
       keys: Object.keys(toTranslate),
       toTranslate,
-      translatedKeys: 0,
+      completedKeys,
     };
   });
+
+  let activeCheckpoint = syncCheckpointWithPlans(checkpoint ?? createCheckpoint(options), plans);
+  saveCheckpoint(options, activeCheckpoint);
 
   emitProgress(options, {
     type: 'start',
@@ -163,7 +212,7 @@ export async function translateMissingKeys(
 
   for (const plan of plans) {
     const batchSize = options.batchSize ?? 50;
-    const keys = plan.keys;
+    const keys = plan.keys.filter((key) => !plan.completedKeys.has(key));
 
     emitProgress(options, { type: 'file-start', file: progressFileFromPlan(plan) });
 
@@ -181,26 +230,32 @@ export async function translateMissingKeys(
       });
 
       Object.assign(plan.fileFlat, response.translations);
-      plan.translatedKeys += batchKeys.length;
+      for (const key of batchKeys) {
+        plan.completedKeys.add(key);
+      }
       const usage = mergeTranslationUsage(plan.usage, response.usage);
       if (usage) {
         plan.usage = usage;
       }
+      activeCheckpoint = updateCheckpointFile(activeCheckpoint, plan, false);
+      saveCheckpoint(options, activeCheckpoint);
       emitProgress(options, { type: 'file-progress', file: progressFileFromPlan(plan) });
     }
 
-    if (!options.dryRun && plan.translatedKeys > 0) {
+    if (!options.dryRun && plan.completedKeys.size > 0) {
       const updated = unflattenTranslations(plan.fileFlat);
       writeFileSync(plan.path, JSON.stringify(updated, null, 2) + '\n', 'utf8');
     }
 
+    activeCheckpoint = updateCheckpointFile(activeCheckpoint, plan, true);
+    saveCheckpoint(options, activeCheckpoint);
     emitProgress(options, { type: 'file-complete', file: progressFileFromPlan(plan) });
 
     results.push({
       language: plan.language,
       file: plan.path,
-      translatedKeys: plan.translatedKeys,
-      skippedKeys: Object.keys(plan.referenceFlat).length - plan.translatedKeys,
+      translatedKeys: plan.completedKeys.size,
+      skippedKeys: Object.keys(plan.referenceFlat).length - plan.completedKeys.size,
       ...(plan.usage && { usage: plan.usage }),
     });
   }
@@ -209,6 +264,8 @@ export async function translateMissingKeys(
     type: 'complete',
     files: plans.map(progressFileFromPlan),
   });
+
+  clearCheckpoint(options);
 
   return results;
 }
@@ -221,9 +278,124 @@ function progressFileFromPlan(plan: TranslateFilePlan): TranslateProgressFile {
   return {
     language: plan.language,
     file: plan.file,
-    translatedKeys: plan.translatedKeys,
+    translatedKeys: plan.completedKeys.size,
     totalKeys: plan.keys.length,
   };
+}
+
+function createCheckpoint(options: TranslateOptions): TranslateCheckpoint | undefined {
+  if (!shouldUseCheckpoint(options)) return undefined;
+
+  const now = new Date().toISOString();
+  return {
+    version: 1,
+    signature: options.checkpoint.signature,
+    createdAt: now,
+    updatedAt: now,
+    files: {},
+  };
+}
+
+function loadCheckpoint(options: TranslateOptions): TranslateCheckpoint | undefined {
+  if (!shouldUseCheckpoint(options) || !options.checkpoint.resume) return undefined;
+  if (!existsSync(options.checkpoint.path)) return undefined;
+
+  try {
+    const parsed = JSON.parse(readFileSync(options.checkpoint.path, 'utf8')) as TranslateCheckpoint;
+    if (parsed.version !== 1 || parsed.signature !== options.checkpoint.signature) {
+      return undefined;
+    }
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
+
+function saveCheckpoint(
+  options: TranslateOptions,
+  checkpoint: TranslateCheckpoint | undefined,
+): void {
+  if (!shouldUseCheckpoint(options) || !checkpoint) return;
+
+  mkdirSync(dirname(options.checkpoint.path), { recursive: true });
+  const updated: TranslateCheckpoint = {
+    ...checkpoint,
+    updatedAt: new Date().toISOString(),
+  };
+  const tmpPath = `${options.checkpoint.path}.tmp`;
+  writeFileSync(tmpPath, JSON.stringify(updated, null, 2) + '\n', 'utf8');
+  renameSync(tmpPath, options.checkpoint.path);
+}
+
+function syncCheckpointWithPlans(
+  checkpoint: TranslateCheckpoint | undefined,
+  plans: TranslateFilePlan[],
+): TranslateCheckpoint | undefined {
+  if (!checkpoint) return undefined;
+
+  return {
+    ...checkpoint,
+    files: Object.fromEntries(
+      plans.map((plan) => {
+        const current = checkpoint.files[plan.path];
+        const completed =
+          current?.completed === true && plan.completedKeys.size === plan.keys.length;
+        return [plan.path, checkpointFileFromPlan(plan, completed)];
+      }),
+    ),
+  };
+}
+
+function updateCheckpointFile(
+  checkpoint: TranslateCheckpoint | undefined,
+  plan: TranslateFilePlan,
+  completed: boolean,
+): TranslateCheckpoint | undefined {
+  if (!checkpoint) return undefined;
+  return {
+    ...checkpoint,
+    files: {
+      ...checkpoint.files,
+      [plan.path]: checkpointFileFromPlan(plan, completed),
+    },
+  };
+}
+
+function checkpointFileFromPlan(
+  plan: TranslateFilePlan,
+  completed: boolean,
+): TranslateCheckpointFile {
+  return {
+    language: plan.language,
+    file: plan.path,
+    totalKeys: plan.keys.length,
+    translations: pickTranslations(plan.fileFlat, plan.completedKeys),
+    completed,
+  };
+}
+
+function clearCheckpoint(options: TranslateOptions): void {
+  if (!shouldUseCheckpoint(options)) return;
+  if (existsSync(options.checkpoint.path)) {
+    unlinkSync(options.checkpoint.path);
+  }
+}
+
+function shouldUseCheckpoint(
+  options: TranslateOptions,
+): options is TranslateOptions & { checkpoint: TranslateCheckpointOptions } {
+  return !options.dryRun && options.checkpoint !== undefined;
+}
+
+function pickTranslations(
+  translations: Record<string, string>,
+  keys: Iterable<string>,
+): Record<string, string> {
+  return Object.fromEntries(
+    [...keys]
+      .filter((key) => translations[key] !== undefined)
+      .map((key) => [key, translations[key]!]),
+  );
 }
 
 function groupFilesByLanguage(files: TranslationFile[]): Map<string, TranslationFile[]> {
