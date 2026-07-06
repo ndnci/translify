@@ -11,6 +11,8 @@
 - Show detailed `translate` progress by default, grouped by locale with one
   progress bar and translated/total count per file. Pass `--no-details` to keep
   the compact spinner-only output.
+- Add `translify translate --file <path>` to restrict translation to one or more
+  specific translation files.
 - Save translate checkpoints in `.translify/translate-checkpoint.json` and
   resume failed/interrupted runs via prompt, `--resume`, or `--restart`.
 - Load `.env`, `.env.local`, `.env.{NODE_ENV}`, and

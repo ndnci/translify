@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { resolveConfig } from '@ndnci/translify-config';
 import { scanTranslationFiles, loadTranslationFile } from '@ndnci/translify-core';
@@ -21,6 +21,11 @@ export function registerTranslateCommand(program: Command, logger: CliLogger): v
     .command('translate')
     .description('Auto-translate missing keys using an AI provider (requires config)')
     .option('--locale <lang>', 'only translate a specific language (e.g. fr, de, pt-BR)')
+    .option(
+      '--file <path>',
+      'only translate specific translation files (repeat or comma-separate)',
+      collectFiles,
+    )
     .option('--all', 'translate all keys, not just missing ones')
     .option('--no-details', 'use the compact spinner-only progress output')
     .option('--resume', 'resume a saved translate checkpoint without prompting')
@@ -31,6 +36,9 @@ export function registerTranslateCommand(program: Command, logger: CliLogger): v
 ${c.dim('Examples:')}
   ${c.brand('$')} translify translate
   ${c.brand('$')} translify translate --locale fr
+  ${c.brand('$')} translify translate --file messages/fr/common.json
+  ${c.brand('$')} translify translate --file messages/fr/common.json --file messages/fr/legal.json
+  ${c.brand('$')} translify translate --file messages/fr/common.json,messages/fr/legal.json
   ${c.brand('$')} translify translate --locale fr --dry-run
   ${c.brand('$')} translify translate --all
   ${c.brand('$')} translify translate --no-details
@@ -41,6 +49,7 @@ ${c.dim('Examples:')}
     .action(
       async (opts: {
         locale?: string;
+        file?: string[];
         all?: boolean;
         details?: boolean;
         resume?: boolean;
@@ -84,6 +93,9 @@ ${c.dim('Examples:')}
           const translationFiles = translationPaths.map(loadTranslationFile);
 
           const targetLocales = opts.locale ? [opts.locale] : undefined;
+          const targetFiles = opts.file?.length
+            ? resolveRequestedTranslationFiles(opts.file, translationFiles, cwd)
+            : undefined;
           const showDetails = opts.details !== false;
           const checkpointPath = join(cwd, '.translify', 'translate-checkpoint.json');
           const checkpointSignature = createTranslateCheckpointSignature({
@@ -91,6 +103,7 @@ ${c.dim('Examples:')}
             model: config.ai_translation.model,
             defaultLanguage: config.translations.default_language,
             targetLocales,
+            targetFiles,
             onlyMissing: !opts.all,
             batchSize: config.ai_translation.batch_size,
             valuesOnly: config.ai_translation.values_only,
@@ -125,6 +138,7 @@ ${c.dim('Examples:')}
             files: translationFiles,
             defaultLanguage: config.translations.default_language,
             ...(targetLocales && { targetLanguages: targetLocales }),
+            ...(targetFiles && { targetFiles }),
             onlyMissing: !opts.all,
             batchSize: config.ai_translation.batch_size,
             valuesOnly: config.ai_translation.values_only,
@@ -294,6 +308,7 @@ function createTranslateCheckpointSignature(input: {
   model: string;
   defaultLanguage: string;
   targetLocales: string[] | undefined;
+  targetFiles: string[] | undefined;
   onlyMissing: boolean;
   batchSize: number;
   valuesOnly: boolean;
@@ -305,7 +320,7 @@ function createTranslateCheckpointSignature(input: {
     .filter((file) => file.language === input.defaultLanguage)
     .map((file) => ({ path: file.path, data: file.data }))
     .sort((a, b) => a.path.localeCompare(b.path));
-  const targetFiles = input.translationFiles
+  const scannedTargetFiles = input.translationFiles
     .filter((file) => file.language !== input.defaultLanguage)
     .map((file) => ({ language: file.language, path: file.path }))
     .sort((a, b) => a.path.localeCompare(b.path));
@@ -317,16 +332,63 @@ function createTranslateCheckpointSignature(input: {
         model: input.model,
         defaultLanguage: input.defaultLanguage,
         targetLocales: input.targetLocales ?? null,
+        targetFiles: input.targetFiles ?? null,
         onlyMissing: input.onlyMissing,
         batchSize: input.batchSize,
         valuesOnly: input.valuesOnly,
         verify: input.verify,
         verifyModel: input.verifyModel ?? null,
         referenceFiles,
-        targetFiles,
+        scannedTargetFiles,
       }),
     )
     .digest('hex');
+}
+
+function collectFiles(value: string, previous: string[] = []): string[] {
+  return [
+    ...previous,
+    ...value
+      .split(',')
+      .map((file) => file.trim())
+      .filter(Boolean),
+  ];
+}
+
+function resolveRequestedTranslationFiles(
+  requestedFiles: string[],
+  translationFiles: ReturnType<typeof loadTranslationFile>[],
+  cwd: string,
+): string[] {
+  const byPath = new Map(
+    translationFiles.flatMap((file) => {
+      const absolute = normalizePath(file.path);
+      const relative = normalizePath(relativePath(file.path, cwd));
+      return [
+        [absolute, file.path],
+        [relative, file.path],
+      ] as const;
+    }),
+  );
+
+  const resolved = requestedFiles.map((file) => {
+    const normalized = normalizePath(file);
+    const absolute = normalizePath(resolve(cwd, file));
+    return byPath.get(normalized) ?? byPath.get(absolute);
+  });
+
+  const missing = requestedFiles.filter((_, index) => !resolved[index]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Translation file not found in configured translations.files: ${missing.join(', ')}`,
+    );
+  }
+
+  return [...new Set(resolved.filter((file): file is string => file !== undefined))];
+}
+
+function normalizePath(path: string): string {
+  return path.replace(/\\/g, '/');
 }
 
 interface DisplayProgressFile extends TranslateProgressFile {

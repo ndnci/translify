@@ -12,6 +12,7 @@ import { translateMissingKeys, type TranslateProgressEvent } from './translator.
 class FakeProvider extends BaseTranslationProvider {
   readonly name = 'fake';
   calls = 0;
+  targetLanguages: string[] = [];
 
   constructor(private readonly failOnCall?: number) {
     super();
@@ -19,6 +20,7 @@ class FakeProvider extends BaseTranslationProvider {
 
   async translate(request: TranslationRequest): Promise<TranslationResponse> {
     this.calls += 1;
+    this.targetLanguages.push(request.targetLanguage);
     if (this.failOnCall === this.calls) {
       throw new Error('simulated provider failure');
     }
@@ -142,5 +144,39 @@ describe('translateMissingKeys', () => {
       two: 'Two translated',
       three: 'Three translated',
     });
+  });
+
+  it('translates only selected target files', async () => {
+    const cwd = '/tmp/translify-target-files';
+    const frPath = join(cwd, 'messages/fr/common.json');
+    const dePath = join(cwd, 'messages/de/common.json');
+    const provider = new FakeProvider();
+
+    const results = await translateMissingKeys(provider, {
+      defaultLanguage: 'en',
+      batchSize: 10,
+      dryRun: true,
+      targetFiles: [dePath],
+      files: [
+        {
+          language: 'en',
+          path: join(cwd, 'messages/en/common.json'),
+          data: { hello: 'Hello' },
+        },
+        {
+          language: 'fr',
+          path: frPath,
+          data: {},
+        },
+        {
+          language: 'de',
+          path: dePath,
+          data: {},
+        },
+      ],
+    });
+
+    expect(provider.targetLanguages).toEqual(['de']);
+    expect(results.map((result) => result.file)).toEqual([dePath]);
   });
 });

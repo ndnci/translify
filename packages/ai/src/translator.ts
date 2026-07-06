@@ -30,6 +30,8 @@ export interface TranslateOptions {
   defaultLanguage: string;
   /** Target languages to translate into (empty = translate all non-default languages) */
   targetLanguages?: string[];
+  /** Target translation files to translate (empty = all target files) */
+  targetFiles?: string[];
   /** Only translate keys with empty/missing values */
   onlyMissing?: boolean;
   /** Number of keys per API call */
@@ -155,10 +157,20 @@ export async function translateMissingKeys(
   const targets = options.files.filter((f) => {
     if (f.language === options.defaultLanguage) return false;
     if (options.targetLanguages?.length) {
-      return options.targetLanguages.includes(f.language);
+      if (!options.targetLanguages.includes(f.language)) return false;
+    }
+    if (options.targetFiles?.length) {
+      return options.targetFiles.some((file) => samePath(file, f.path));
     }
     return true;
   });
+
+  if (options.targetFiles?.length && targets.length === 0) {
+    throw new Error(
+      'No target translation files matched --file. Make sure the selected file exists in translations.files, is not the default-language file, and matches --locale if provided.',
+    );
+  }
+
   const checkpoint = loadCheckpoint(options);
 
   const plans = targets.map((file): TranslateFilePlan => {
@@ -281,6 +293,10 @@ function progressFileFromPlan(plan: TranslateFilePlan): TranslateProgressFile {
     translatedKeys: plan.completedKeys.size,
     totalKeys: plan.keys.length,
   };
+}
+
+function samePath(a: string, b: string): boolean {
+  return a.replace(/\\/g, '/') === b.replace(/\\/g, '/');
 }
 
 function createCheckpoint(options: TranslateOptions): TranslateCheckpoint | undefined {

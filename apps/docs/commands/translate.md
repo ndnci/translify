@@ -18,6 +18,13 @@ translify translate
 # Translate only French
 translify translate --locale fr
 
+# Translate only one split translation file
+translify translate --file messages/fr/common.json
+
+# Translate multiple specific files
+translify translate --file messages/fr/common.json --file messages/fr/legal.json
+translify translate --file messages/fr/common.json,messages/fr/legal.json
+
 # Preview without writing
 translify translate --dry-run
 
@@ -46,19 +53,25 @@ merged reference-language catalogue.
 
 ## Options
 
-| Option            | Description                                  |
-| ----------------- | -------------------------------------------- |
-| `--locale <lang>` | Only translate a specific language           |
-| `--all`           | Re-translate all keys, not just missing ones |
-| `--no-details`    | Use compact spinner-only progress output     |
-| `--resume`        | Resume a saved translate checkpoint          |
-| `--restart`       | Discard a saved checkpoint and start fresh   |
-| `--dry-run`       | Preview without writing                      |
-| `-c, --config`    | Path to config file                          |
+| Option            | Description                                                  |
+| ----------------- | ------------------------------------------------------------ |
+| `--locale <lang>` | Only translate a specific language                           |
+| `--file <path>`   | Only translate specific files; repeatable or comma-separated |
+| `--all`           | Re-translate all keys, not just missing ones                 |
+| `--no-details`    | Use compact spinner-only progress output                     |
+| `--resume`        | Resume a saved translate checkpoint                          |
+| `--restart`       | Discard a saved checkpoint and start fresh                   |
+| `--dry-run`       | Preview without writing                                      |
+| `-c, --config`    | Path to config file                                          |
 
 By default, `translate` shows a detailed progress view grouped by locale, with
 one progress bar per translation file and counts like `(126/2396)` for
 translated keys versus total keys to translate.
+
+Without `--all`, Translify only fills missing or empty values. With `--all`, it
+re-translates already-filled values too. Use `--file` to restrict translation to
+one or more configured translation JSON files; it can be combined with
+`--locale`.
 
 ## Resume failed translations
 
