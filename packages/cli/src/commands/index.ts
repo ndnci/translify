@@ -1,6 +1,7 @@
 export { registerAddLanguagesCommand } from './add-languages.js';
 export { registerInitCommand } from './init.js';
 export { registerAddMissingCommand } from './add-missing.js';
+export { registerConfigUpgradeCommand } from './config-upgrade.js';
 export { registerCheckConfigCommand } from './check-config.js';
 export { registerCheckHardcodedCommand } from './check-hardcoded.js';
 export { registerTranslateCommand } from './translate.js';

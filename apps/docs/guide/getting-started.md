@@ -19,9 +19,7 @@ translify init
 This creates `translify.config.ts` with sensible defaults:
 
 ```ts
-import { defineConfig } from '@ndnci/translify/config';
-
-export default defineConfig({
+export default {
   source: {
     include: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
     exclude: ['**/*.test.*', '**/node_modules/**'],
@@ -34,7 +32,7 @@ export default defineConfig({
     translation_functions: ['t', 'i18n.t', 'translate'],
     namespace_functions: ['useTranslations', 'getTranslations'],
   },
-});
+};
 ```
 
 Edit the config to match your project structure.

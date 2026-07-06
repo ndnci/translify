@@ -42,9 +42,9 @@ $ translify init
 ## Generated config
 
 ```ts
-import { defineConfig } from '@ndnci/translify/config';
-
-export default defineConfig({
+// Optional editor autocomplete:
+// /** @type {import('@ndnci/translify/config').TranslifyConfig} */
+export default {
   source: {
     include: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
     exclude: ['**/*.test.*', '**/node_modules/**'],
@@ -63,8 +63,13 @@ export default defineConfig({
     enabled: false,
     provider: 'openai',
     openai_api_key: process.env.OPENAI_API_KEY,
+    openrouter_api_key: process.env.OPENROUTER_API_KEY,
     model: 'gpt-4.1-mini',
     temperature: 0,
+    batch_size: 50,
+    verify: false,
+    verify_model: undefined,
+    values_only: false,
   },
-});
+};
 ```

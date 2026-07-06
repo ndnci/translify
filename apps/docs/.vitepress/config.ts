@@ -23,7 +23,7 @@ export default defineConfig({
       { text: 'Commands', link: '/commands/audit' },
       { text: 'Config', link: '/guide/configuration' },
       {
-        text: 'v0.1.0',
+        text: 'v0.6.0',
         items: [
           { text: 'Changelog', link: 'https://github.com/ndnci/translify/releases' },
           {
@@ -47,22 +47,31 @@ export default defineConfig({
         text: 'CLI Commands',
         items: [
           { text: 'init', link: '/commands/init' },
+          { text: 'config-upgrade', link: '/commands/config-upgrade' },
           { text: 'add-missing', link: '/commands/add-missing' },
+          { text: 'add-languages', link: '/commands/add-languages' },
+          { text: 'split-translations', link: '/commands/split-translations' },
+          { text: 'audit-fix', link: '/commands/audit-fix' },
+          { text: 'hardcoded-fix', link: '/commands/hardcoded-fix' },
           { text: 'translate', link: '/commands/translate' },
+          { text: 'check-config', link: '/commands/check-config' },
           { text: 'check-missing', link: '/commands/check-missing' },
           { text: 'check-unused', link: '/commands/check-unused' },
           { text: 'check-duplicates', link: '/commands/check-duplicates' },
           { text: 'check-consistency', link: '/commands/check-consistency' },
+          { text: 'check-hardcoded', link: '/commands/check-hardcoded' },
           { text: 'optimize', link: '/commands/optimize' },
           { text: 'audit', link: '/commands/audit' },
-          { text: 'doctor', link: '/commands/doctor' },
           { text: 'version', link: '/commands/version' },
           { text: 'upgrade', link: '/commands/upgrade' },
         ],
       },
       {
         text: 'AI Providers',
-        items: [{ text: 'OpenAI', link: '/providers/openai' }],
+        items: [
+          { text: 'OpenAI', link: '/providers/openai' },
+          { text: 'OpenRouter', link: '/providers/openrouter' },
+        ],
       },
       {
         text: 'Contributing',

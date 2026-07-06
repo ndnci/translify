@@ -110,7 +110,7 @@ export async function loadRawConfig(resolved: ResolvedConfigPath): Promise<Trans
     if (!config || typeof config !== 'object') {
       throw new ConfigError(
         `Config file at ${resolved.path} does not export a valid config object.\n` +
-          `Make sure you use: export default defineConfig({ ... })`,
+          `Make sure you use: export default { ... }`,
       );
     }
 

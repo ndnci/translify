@@ -14,24 +14,35 @@ Translify searches for config files in this order:
 6. `config/translify.config.*`
 7. `.config/translify.config.*`
 
-## Using `defineConfig`
+## Config style
 
-The recommended approach — provides full TypeScript autocompletion:
+The generated config is a plain default export, so it works even when Translify
+is installed globally and not in your project dependencies:
 
 ```ts
-import { defineConfig } from '@ndnci/translify/config';
-
-export default defineConfig({
+export default {
   // ...
-});
+};
 ```
+
+For editor autocomplete, install `@ndnci/translify` in the project and add a
+JSDoc type comment:
+
+```ts
+// /** @type {import('@ndnci/translify/config').TranslifyConfig} */
+export default {
+  // ...
+};
+```
+
+`defineConfig` is still supported for existing projects, but it is no longer
+required.
 
 ## Full config reference
 
 ```ts
-import { defineConfig } from '@ndnci/translify/config';
-
-export default defineConfig({
+// /** @type {import('@ndnci/translify/config').TranslifyConfig} */
+export default {
   // ── Source ─────────────────────────────────────────────────────────────
   source: {
     // Glob patterns for source files to scan
@@ -110,20 +121,36 @@ export default defineConfig({
   // ── AI Translation ──────────────────────────────────────────────────────
   ai_translation: {
     enabled: false,
-    provider: 'openai',
+    provider: 'openai', // 'openai' or 'openrouter'
     openai_api_key: process.env.OPENAI_API_KEY,
+    openrouter_api_key: process.env.OPENROUTER_API_KEY,
     model: 'gpt-4.1-mini',
     temperature: 0,
     batch_size: 50,
+    verify: false,
+    verify_model: undefined,
+    values_only: false,
   },
-});
+};
 ```
 
 ## Environment variables
 
-| Variable         | Description                       |
-| ---------------- | --------------------------------- |
-| `OPENAI_API_KEY` | OpenAI API key for AI translation |
+| Variable             | Description                           |
+| -------------------- | ------------------------------------- |
+| `OPENAI_API_KEY`     | OpenAI API key for AI translation     |
+| `OPENROUTER_API_KEY` | OpenRouter API key for AI translation |
+
+## Upgrading existing configs
+
+When Translify adds new config keys, run:
+
+```bash
+translify config-upgrade
+```
+
+It adds missing defaults such as `ai_translation.openrouter_api_key`, `verify`,
+and `values_only` without overwriting existing values.
 
 ## Validation
 

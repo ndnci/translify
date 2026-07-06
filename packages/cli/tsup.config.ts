@@ -27,6 +27,7 @@ export default defineConfig([
       'fast-glob',
       'jiti',
       'jsonc-parser',
+      '@openrouter/sdk',
       'openai',
       'zod',
     ],

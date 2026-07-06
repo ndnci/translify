@@ -4,6 +4,8 @@ import {
   BaseTranslationProvider,
   type TranslationRequest,
   type TranslationResponse,
+  type TranslationUsage,
+  mergeTranslationUsage,
 } from './base-provider.js';
 
 export interface OpenAIProviderOptions {
@@ -43,48 +45,28 @@ export class OpenAIProvider extends BaseTranslationProvider {
       return { translations: {}, provider: this.name };
     }
 
-    const prompt = this.buildPrompt(request);
-
-    let raw: string;
     try {
-      const response = await this.client.chat.completions.create({
-        model: this.model,
-        temperature: this.temperature,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a professional software localization expert. ' +
-              'Translate i18n JSON key-value pairs accurately and naturally. ' +
-              'Preserve all interpolation variables exactly as-is (e.g. {name}, {{count}}, %s). ' +
-              'Return ONLY a valid JSON object with the same keys and translated values. ' +
-              'Do not add explanations or comments.',
-          },
-          { role: 'user', content: prompt },
-        ],
-      });
+      const translated = await this.translateOnce(request, this.model);
+      let translations = translated.translations;
+      let usage = translated.usage;
 
-      raw = response.choices[0]?.message?.content ?? '{}';
-      const tokensUsed = response.usage?.total_tokens;
-
-      let translations: Record<string, string>;
-      try {
-        translations = JSON.parse(raw) as Record<string, string>;
-      } catch {
-        this.throwProviderError(`Response was not valid JSON.\n\nRaw response:\n${raw}`);
+      if (request.verify) {
+        const verified = await this.verifyTranslations(
+          request,
+          translations,
+          request.verifyModel ?? this.model,
+        );
+        translations = verified.translations;
+        usage = mergeTranslationUsage(usage, verified.usage);
       }
 
-      // Validate that all input keys are present in the response
-      const missing = Object.keys(request.entries).filter((k) => !(k in translations));
-      if (missing.length > 0) {
-        this.throwProviderError(`Translation response is missing keys: ${missing.join(', ')}`);
-      }
+      const tokensUsed = usage?.totalTokens;
 
       return {
         translations,
         provider: this.name,
         ...(tokensUsed !== undefined && { tokensUsed }),
+        ...(usage && { usage }),
       };
     } catch (cause) {
       if (cause instanceof Error && cause.name === 'AIProviderError') throw cause;
@@ -104,9 +86,153 @@ export class OpenAIProvider extends BaseTranslationProvider {
   }
 
   private buildPrompt(request: TranslationRequest): string {
+    if (request.valuesOnly) {
+      return (
+        `Translate each value in this JSON array from "${request.sourceLanguage}" to "${request.targetLanguage}".\n` +
+        'Return ONLY a valid JSON array with the same length and order.\n\n' +
+        JSON.stringify(Object.values(request.entries), null, 2)
+      );
+    }
+
     return (
       `Translate the following JSON from "${request.sourceLanguage}" to "${request.targetLanguage}".\n\n` +
       JSON.stringify(request.entries, null, 2)
     );
+  }
+
+  private async translateOnce(
+    request: TranslationRequest,
+    model: string,
+  ): Promise<{ translations: Record<string, string>; usage?: TranslationUsage }> {
+    const response = await this.client.chat.completions.create({
+      model,
+      temperature: this.temperature,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a professional software localization expert. ' +
+            'Translate i18n strings accurately and naturally. ' +
+            'Preserve all interpolation variables exactly as-is (e.g. {name}, {{count}}, %s). ' +
+            (request.valuesOnly
+              ? 'Return ONLY a valid JSON object with an "items" array containing translated values in the same order. '
+              : 'Return ONLY a valid JSON object with the same keys and translated values. ') +
+            'Do not add explanations or comments.',
+        },
+        { role: 'user', content: this.buildPrompt(request) },
+      ],
+    });
+
+    const raw = response.choices[0]?.message?.content ?? '{}';
+    const translations = request.valuesOnly
+      ? this.parseValuesOnlyResponse(raw, request)
+      : this.parseKeyedResponse(raw, request, 'Translation');
+    const usage = this.usageFromOpenAI(response.usage);
+
+    return { translations, ...(usage && { usage }) };
+  }
+
+  private async verifyTranslations(
+    request: TranslationRequest,
+    translations: Record<string, string>,
+    model: string,
+  ): Promise<{ translations: Record<string, string>; usage?: TranslationUsage }> {
+    const response = await this.client.chat.completions.create({
+      model,
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a senior localization reviewer. Verify that each translation is accurate, natural, and preserves interpolation variables exactly. ' +
+            'Return ONLY a valid JSON object with the same keys and the corrected translated values. Do not add explanations.',
+        },
+        {
+          role: 'user',
+          content:
+            `Source language: "${request.sourceLanguage}"\n` +
+            `Target language: "${request.targetLanguage}"\n\n` +
+            `Source JSON:\n${JSON.stringify(request.entries, null, 2)}\n\n` +
+            `Candidate translations:\n${JSON.stringify(translations, null, 2)}`,
+        },
+      ],
+    });
+
+    const raw = response.choices[0]?.message?.content ?? '{}';
+    const verified = this.parseKeyedResponse(raw, request, 'Verification');
+    const usage = this.usageFromOpenAI(response.usage);
+
+    return { translations: verified, ...(usage && { usage }) };
+  }
+
+  private parseKeyedResponse(
+    raw: string,
+    request: TranslationRequest,
+    label: string,
+  ): Record<string, string> {
+    let translations: Record<string, string>;
+    try {
+      translations = JSON.parse(raw) as Record<string, string>;
+    } catch {
+      this.throwProviderError(`${label} response was not valid JSON.\n\nRaw response:\n${raw}`);
+    }
+
+    const missing = Object.keys(request.entries).filter((k) => !(k in translations));
+    if (missing.length > 0) {
+      this.throwProviderError(`${label} response is missing keys: ${missing.join(', ')}`);
+    }
+
+    return Object.fromEntries(
+      Object.keys(request.entries).map((key) => [key, String(translations[key] ?? '')]),
+    );
+  }
+
+  private parseValuesOnlyResponse(
+    raw: string,
+    request: TranslationRequest,
+  ): Record<string, string> {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw) as unknown;
+    } catch {
+      this.throwProviderError(`Translation response was not valid JSON.\n\nRaw response:\n${raw}`);
+    }
+
+    const items = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as { items?: unknown }).items)
+        ? (parsed as { items: unknown[] }).items
+        : null;
+
+    const keys = Object.keys(request.entries);
+    if (!items || items.length !== keys.length) {
+      this.throwProviderError(
+        `Translation response must contain ${keys.length} values in order, received ${items?.length ?? 'none'}.`,
+      );
+    }
+
+    return Object.fromEntries(keys.map((key, index) => [key, String(items[index] ?? '')]));
+  }
+
+  private usageFromOpenAI(
+    usage:
+      | {
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          total_tokens?: number;
+        }
+      | null
+      | undefined,
+  ): TranslationUsage | undefined {
+    if (!usage) return undefined;
+    return {
+      ...(usage.prompt_tokens !== undefined && { promptTokens: usage.prompt_tokens }),
+      ...(usage.completion_tokens !== undefined && {
+        completionTokens: usage.completion_tokens,
+      }),
+      ...(usage.total_tokens !== undefined && { totalTokens: usage.total_tokens }),
+    };
   }
 }

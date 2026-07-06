@@ -128,16 +128,19 @@ const AITranslationSchema = z
     enabled: z.boolean().default(false),
 
     /** AI provider to use for translation */
-    provider: z.enum(['openai']).default('openai'),
+    provider: z.enum(['openai', 'openrouter']).default('openai'),
 
     /** OpenAI API key — required when provider = "openai" */
     openai_api_key: z.string().optional(),
 
+    /** OpenRouter API key — required when provider = "openrouter" */
+    openrouter_api_key: z.string().optional(),
+
     /**
-     * OpenAI model to use.
+     * AI model to use.
      *
      * Recommended: "gpt-4.1-mini" (fast + affordable)
-     * Higher quality: "gpt-4.1"
+     * OpenRouter accepts any model slug from https://openrouter.ai/models
      */
     model: z.string().default('gpt-4.1-mini'),
 
@@ -146,6 +149,15 @@ const AITranslationSchema = z
 
     /** Maximum number of keys to translate per API call */
     batch_size: z.number().int().min(1).max(500).default(50),
+
+    /** Ask a second LLM pass to verify and correct each translated batch */
+    verify: z.boolean().default(false),
+
+    /** Optional model used for verification; defaults to `model` */
+    verify_model: z.string().optional(),
+
+    /** Send only source values to the provider, then remap by response order */
+    values_only: z.boolean().default(false),
   })
   .strict()
   .superRefine((data, ctx) => {
@@ -156,6 +168,16 @@ const AITranslationSchema = z
         message:
           'openai_api_key is required when provider is "openai" and ai_translation is enabled.\n' +
           'Set it via process.env.OPENAI_API_KEY or directly in your config.',
+      });
+    }
+
+    if (data.enabled && data.provider === 'openrouter' && !data.openrouter_api_key) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['openrouter_api_key'],
+        message:
+          'openrouter_api_key is required when provider is "openrouter" and ai_translation is enabled.\n' +
+          'Set it via process.env.OPENROUTER_API_KEY or directly in your config.',
       });
     }
   });
@@ -175,5 +197,5 @@ export const TranslifyConfigSchema = z
 export type TranslifyConfig = z.infer<typeof TranslifyConfigSchema>;
 export type TranslifyConfigInput = z.input<typeof TranslifyConfigSchema>;
 
-/** Partial config as returned by defineConfig() — filled with defaults during load */
+/** Partial user config input — filled with defaults during load */
 export type UserConfig = TranslifyConfigInput;

@@ -1,10 +1,17 @@
 import {
   type TranslationFile,
+  type TranslationRecord,
   flattenTranslations,
   unflattenTranslations,
+  deepMerge,
 } from '@ndnci/translify-shared';
-import type { BaseTranslationProvider } from './providers/base-provider.js';
+import {
+  type BaseTranslationProvider,
+  type TranslationUsage,
+  mergeTranslationUsage,
+} from './providers/base-provider.js';
 import { OpenAIProvider } from './providers/openai-provider.js';
+import { OpenRouterProvider } from './providers/openrouter-provider.js';
 import type { TranslifyConfig } from '@ndnci/translify-config';
 import { writeFileSync } from 'node:fs';
 
@@ -19,6 +26,12 @@ export interface TranslateOptions {
   onlyMissing?: boolean;
   /** Number of keys per API call */
   batchSize?: number;
+  /** Send only values to the provider and remap by order */
+  valuesOnly?: boolean;
+  /** Run a verification/correction pass after translation */
+  verify?: boolean;
+  /** Optional verification model override */
+  verifyModel?: string;
   dryRun?: boolean;
 }
 
@@ -27,6 +40,7 @@ export interface TranslateFileResult {
   file: string;
   translatedKeys: number;
   skippedKeys: number;
+  usage?: TranslationUsage;
 }
 
 /**
@@ -36,6 +50,14 @@ export function createProvider(config: TranslifyConfig['ai_translation']): BaseT
   if (config.provider === 'openai') {
     return new OpenAIProvider({
       apiKey: config.openai_api_key!,
+      model: config.model,
+      temperature: config.temperature,
+    });
+  }
+
+  if (config.provider === 'openrouter') {
+    return new OpenRouterProvider({
+      apiKey: config.openrouter_api_key!,
       model: config.model,
       temperature: config.temperature,
     });
@@ -56,13 +78,17 @@ export async function translateMissingKeys(
 ): Promise<TranslateFileResult[]> {
   const results: TranslateFileResult[] = [];
 
-  const referenceFile = options.files.find((f) => f.language === options.defaultLanguage);
+  const filesByLanguage = groupFilesByLanguage(options.files);
+  const referenceFiles = filesByLanguage.get(options.defaultLanguage) ?? [];
 
-  if (!referenceFile) {
+  if (referenceFiles.length === 0) {
     throw new Error(`Reference language file not found for language: "${options.defaultLanguage}"`);
   }
 
-  const referenceFlat = flattenTranslations(referenceFile.data);
+  const referenceBySignature = new Map(
+    referenceFiles.map((file) => [translationFileSignature(file), file]),
+  );
+  const mergedReferenceFlat = flattenTranslations(mergeTranslationFiles(referenceFiles));
 
   const targets = options.files.filter((f) => {
     if (f.language === options.defaultLanguage) return false;
@@ -74,6 +100,10 @@ export async function translateMissingKeys(
 
   for (const file of targets) {
     const fileFlat = flattenTranslations(file.data);
+    const referenceFile = referenceBySignature.get(translationFileSignature(file));
+    const referenceFlat = referenceFile
+      ? flattenTranslations(referenceFile.data)
+      : mergedReferenceFlat;
 
     // Determine which keys need translation
     const toTranslate: Record<string, string> = {};
@@ -89,6 +119,7 @@ export async function translateMissingKeys(
     const batchSize = options.batchSize ?? 50;
     const keys = Object.keys(toTranslate);
     let translatedCount = 0;
+    let usage: TranslationUsage | undefined;
 
     for (let i = 0; i < keys.length; i += batchSize) {
       const batchKeys = keys.slice(i, i + batchSize);
@@ -98,10 +129,14 @@ export async function translateMissingKeys(
         entries: batchEntries,
         sourceLanguage: options.defaultLanguage,
         targetLanguage: file.language,
+        ...(options.valuesOnly !== undefined && { valuesOnly: options.valuesOnly }),
+        ...(options.verify !== undefined && { verify: options.verify }),
+        ...(options.verifyModel !== undefined && { verifyModel: options.verifyModel }),
       });
 
       Object.assign(fileFlat, response.translations);
       translatedCount += batchKeys.length;
+      usage = mergeTranslationUsage(usage, response.usage);
     }
 
     if (!options.dryRun && translatedCount > 0) {
@@ -114,8 +149,40 @@ export async function translateMissingKeys(
       file: file.path,
       translatedKeys: translatedCount,
       skippedKeys: Object.keys(referenceFlat).length - translatedCount,
+      ...(usage && { usage }),
     });
   }
 
   return results;
+}
+
+function groupFilesByLanguage(files: TranslationFile[]): Map<string, TranslationFile[]> {
+  const byLanguage = new Map<string, TranslationFile[]>();
+  for (const file of files) {
+    const list = byLanguage.get(file.language) ?? [];
+    list.push(file);
+    byLanguage.set(file.language, list);
+  }
+  return byLanguage;
+}
+
+function mergeTranslationFiles(files: TranslationFile[]): TranslationRecord {
+  return files.reduce<TranslationRecord>((merged, file) => deepMerge(merged, file.data), {});
+}
+
+function translationFileSignature(file: TranslationFile): string {
+  const normalized = file.path.replace(/\\/g, '/');
+  const parts = normalized.split('/').filter(Boolean);
+  const basename = parts.at(-1) ?? normalized;
+  const stem = basename.replace(/\.json$/, '');
+
+  if (stem === file.language) return '__single__';
+
+  for (let i = parts.length - 2; i >= 0; i--) {
+    if (parts[i] === file.language) {
+      return parts.slice(i + 1).join('/');
+    }
+  }
+
+  return basename;
 }

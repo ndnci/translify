@@ -6,6 +6,7 @@ import {
   registerInitCommand,
   registerAddLanguagesCommand,
   registerAddMissingCommand,
+  registerConfigUpgradeCommand,
   registerTranslateCommand,
   registerCheckConfigCommand,
   registerCheckHardcodedCommand,
@@ -54,6 +55,7 @@ ${c.dim('Checks (read-only):')}
 
 ${c.dim('Actions:')}
   ${c.brand('init')}          Initialize a config file
+  ${c.brand('config-upgrade')} Add new config keys without overwriting values
   ${c.brand('add-missing')}   Add keys used in code but missing from translation files
   ${c.brand('add-languages')} Create translation files for new languages
   ${c.brand('split-translations')} Split large locale files by context
@@ -66,6 +68,7 @@ ${c.dim('Actions:')}
 
 ${c.dim('Examples:')}
   ${c.dim('$')} translify init
+  ${c.dim('$')} translify config-upgrade
   ${c.dim('$')} translify audit
   ${c.dim('$')} translify split-translations --groups "tools=tool|foo,auth=auth"
   ${c.dim('$')} translify add-languages it de --empty
@@ -86,6 +89,7 @@ ${c.dim('Documentation:')} https://ndnci.github.io/translify/commands/
 
   registerCheckConfigCommand(program, getLogger());
   registerInitCommand(program, getLogger());
+  registerConfigUpgradeCommand(program, getLogger());
   registerAddLanguagesCommand(program, getLogger());
   registerAddMissingCommand(program, getLogger());
   registerTranslateCommand(program, getLogger());

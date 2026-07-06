@@ -9,6 +9,8 @@ import type { TranslifyConfigInput } from '@ndnci/translify-shared';
  * @example
  * ```ts
  * // translify.config.ts
+ * Optional compatibility helper for projects that prefer function-wrapped config.
+ *
  * import { defineConfig } from '@ndnci/translify/config';
  *
  * export default defineConfig({

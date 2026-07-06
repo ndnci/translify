@@ -40,6 +40,32 @@ describe('validateConfig', () => {
     expect(config.ai_translation.openai_api_key).toBe('sk-test-key');
   });
 
+  it('passes with OpenRouter when its API key is provided', () => {
+    const config = validateConfig({
+      ai_translation: {
+        enabled: true,
+        provider: 'openrouter',
+        openrouter_api_key: 'sk-or-test-key',
+        model: 'anthropic/claude-sonnet-4',
+        verify: true,
+        values_only: true,
+      },
+    });
+
+    expect(config.ai_translation.provider).toBe('openrouter');
+    expect(config.ai_translation.openrouter_api_key).toBe('sk-or-test-key');
+    expect(config.ai_translation.verify).toBe(true);
+    expect(config.ai_translation.values_only).toBe(true);
+  });
+
+  it('throws ConfigValidationError when OpenRouter is enabled without API key', () => {
+    expect(() =>
+      validateConfig({
+        ai_translation: { enabled: true, provider: 'openrouter' },
+      }),
+    ).toThrow(ConfigValidationError);
+  });
+
   it('throws ConfigValidationError with readable message on invalid temperature', () => {
     expect(() =>
       validateConfig({

@@ -39,8 +39,8 @@ features:
   - icon: 🤖
     title: AI Translation
     details:
-      Auto-translate missing keys via OpenAI GPT — preserving interpolation
-      variables and your brand voice.
+      Auto-translate missing keys via OpenAI or OpenRouter — preserving
+      interpolation variables and your brand voice.
 
   - icon: ✨
     title: Optimize

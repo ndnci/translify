@@ -68,10 +68,24 @@ ${c.dim('Examples:')}
           ...(targetLocales && { targetLanguages: targetLocales }),
           onlyMissing: !opts.all,
           batchSize: config.ai_translation.batch_size,
+          valuesOnly: config.ai_translation.values_only,
+          verify: config.ai_translation.verify,
+          ...(config.ai_translation.verify_model && {
+            verifyModel: config.ai_translation.verify_model,
+          }),
           dryRun,
         });
 
         const totalTranslated = results.reduce((s, r) => s + r.translatedKeys, 0);
+        const totalPromptTokens = results.reduce((s, r) => s + (r.usage?.promptTokens ?? 0), 0);
+        const totalCompletionTokens = results.reduce(
+          (s, r) => s + (r.usage?.completionTokens ?? 0),
+          0,
+        );
+        const totalTokens = results.reduce((s, r) => s + (r.usage?.totalTokens ?? 0), 0);
+        const totalCost = results.reduce((s, r) => s + (r.usage?.costUsd ?? 0), 0);
+        const hasUsage = results.some((r) => r.usage);
+        const hasCost = results.some((r) => r.usage?.costUsd !== undefined);
 
         spinner.succeed(
           dryRun
@@ -87,8 +101,23 @@ ${c.dim('Examples:')}
           process.stdout.write(
             `  ${c.lang(result.language.padEnd(8))} ${c.file(rel)}  ` +
               `${c.success(`${result.translatedKeys} translated`)}  ` +
-              `${c.dim(`${result.skippedKeys} skipped`)}\n`,
+              `${c.dim(`${result.skippedKeys} skipped`)}` +
+              formatUsage(result.usage) +
+              '\n',
           );
+        }
+
+        if (hasUsage) {
+          logger.spacer();
+          logger.section('AI usage');
+          process.stdout.write(
+            `  ${c.dim('Prompt tokens:')} ${totalPromptTokens.toLocaleString()}\n` +
+              `  ${c.dim('Completion tokens:')} ${totalCompletionTokens.toLocaleString()}\n` +
+              `  ${c.dim('Total tokens:')} ${totalTokens.toLocaleString()}\n`,
+          );
+          if (hasCost) {
+            process.stdout.write(`  ${c.dim('Total cost:')} ${formatUsd(totalCost)}\n`);
+          }
         }
 
         logger.spacer();
@@ -99,4 +128,20 @@ ${c.dim('Examples:')}
         process.exit(1);
       }
     });
+}
+
+function formatUsage(usage: { totalTokens?: number; costUsd?: number } | undefined): string {
+  if (!usage) return '';
+  const parts: string[] = [];
+  if (usage.totalTokens !== undefined) {
+    parts.push(`${usage.totalTokens.toLocaleString()} tokens`);
+  }
+  if (usage.costUsd !== undefined) {
+    parts.push(formatUsd(usage.costUsd));
+  }
+  return parts.length > 0 ? `  ${c.dim(parts.join(' / '))}` : '';
+}
+
+function formatUsd(value: number): string {
+  return `$${value.toFixed(value < 0.01 && value > 0 ? 6 : 4)}`;
 }

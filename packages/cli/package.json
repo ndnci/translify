@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Intelligent i18n CLI — extract, sync, detect, and translate your app",
   "keywords": [
     "i18n",
@@ -54,6 +54,7 @@
     "@babel/parser": "^7.26.2",
     "@babel/traverse": "^7.26.4",
     "@babel/types": "^7.26.3",
+    "@openrouter/sdk": "^0.13.24",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "fast-glob": "^3.3.2",

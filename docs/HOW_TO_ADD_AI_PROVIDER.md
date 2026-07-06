@@ -12,6 +12,7 @@ The AI package (`packages/ai`) uses a **provider pattern**:
 ```
 BaseTranslationProvider (abstract class)
     └── OpenAIProvider
+    └── OpenRouterProvider
     └── YourNewProvider  ← you add this
 ```
 
@@ -28,6 +29,7 @@ import {
   BaseTranslationProvider,
   type TranslationRequest,
   type TranslationResponse,
+  type TranslationUsage,
 } from './base-provider.js';
 import { MissingApiKeyError } from '@ndnci/translify-shared';
 
@@ -95,7 +97,9 @@ export class DeepLProvider extends BaseTranslationProvider {
       keys.map((key, i) => [key, data.translations[i]?.text ?? '']),
     );
 
-    return { translations, provider: this.name };
+    const usage: TranslationUsage | undefined = undefined;
+
+    return { translations, provider: this.name, ...(usage && { usage }) };
   }
 
   async healthCheck(): Promise<void> {
@@ -115,14 +119,14 @@ export class DeepLProvider extends BaseTranslationProvider {
 
 ## Step 2 — Add to the config schema
 
-In `packages/config/src/schema.ts`, extend the `provider` enum:
+In `packages/shared/src/types/config.ts`, extend the `provider` enum:
 
 ```typescript
 // Before:
-provider: z.enum(['openai']).default('openai'),
+provider: z.enum(['openai', 'openrouter']).default('openai'),
 
 // After:
-provider: z.enum(['openai', 'deepl']).default('openai'),
+provider: z.enum(['openai', 'openrouter', 'deepl']).default('openai'),
 ```
 
 Add the new API key field:
@@ -142,7 +146,7 @@ Add a cross-field validation:
       message: 'deepl_api_key is required when provider is "deepl".',
     });
   }
-  // ... existing openai check ...
+  // ... existing openai/openrouter checks ...
 });
 ```
 
@@ -159,6 +163,9 @@ export function createProvider(config: TranslifyConfig['ai_translation']): BaseT
   switch (config.provider) {
     case 'openai':
       return new OpenAIProvider({ apiKey: config.openai_api_key!, ... });
+
+    case 'openrouter':
+      return new OpenRouterProvider({ apiKey: config.openrouter_api_key!, ... });
 
     case 'deepl':
       return new DeepLProvider({ apiKey: config.deepl_api_key! });
@@ -190,9 +197,36 @@ Create `apps/docs/providers/deepl.md` describing setup and usage.
 
 Update `apps/docs/.vitepress/config.ts` to add it to the sidebar.
 
+Also update:
+
+- `README.md`
+- `apps/docs/commands/translate.md`
+- `apps/docs/guide/configuration.md`
+- `CHANGELOG.md`
+
 ---
 
-## Step 6 — Add a changeset and submit a PR
+## Step 6 — Add usage metrics when available
+
+If the provider reports token usage or cost, include it in
+`TranslationResponse.usage`:
+
+```typescript
+return {
+  translations,
+  provider: this.name,
+  usage: {
+    promptTokens,
+    completionTokens,
+    totalTokens,
+    costUsd,
+  },
+};
+```
+
+The CLI automatically aggregates these metrics for `translify translate`.
+
+## Step 7 — Add a changeset and submit a PR
 
 ```bash
 pnpm changeset

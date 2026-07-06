@@ -43,6 +43,7 @@
   "dependencies": {
     "@ndnci/translify-config": "workspace:*",
     "@ndnci/translify-shared": "workspace:*",
+    "@openrouter/sdk": "^0.13.24",
     "openai": "^6.45.0"
   },
   "devDependencies": {

@@ -4,7 +4,7 @@ import type { Command } from 'commander';
 import type { CliLogger } from '../ui/logger.js';
 import { c } from '../ui/colors.js';
 
-const CONFIG_TEMPLATE = `// Optional editor autocomplete: install @ndnci/translify as a devDependency
+export const CONFIG_TEMPLATE = `// Optional editor autocomplete: install @ndnci/translify as a devDependency
 // (npm i -D @ndnci/translify) and uncomment the line below. Not required to
 // run the CLI — this file works as-is even if Translify is only installed globally.
 // /** @type {import('@ndnci/translify/config').TranslifyConfig} */
@@ -54,8 +54,13 @@ export default {
     enabled: false,
     provider: 'openai',
     openai_api_key: process.env.OPENAI_API_KEY,
+    openrouter_api_key: process.env.OPENROUTER_API_KEY,
     model: 'gpt-4.1-mini',
     temperature: 0,
+    batch_size: 50,
+    verify: false,
+    verify_model: undefined,
+    values_only: false,
   },
 };
 `;

@@ -36,7 +36,7 @@ hardest parts of i18n:
   language as one catalogue
 - **Detect** unused, missing, duplicate, and cross-locale inconsistent
   translation entries, plus hardcoded user-facing text
-- **Translate** automatically via AI providers (OpenAI GPT-4)
+- **Translate** automatically via AI providers (OpenAI or OpenRouter)
 - **Audit** your entire i18n health in one command
 - **Fix** deterministic audit issues with `--dry-run` previews
 
@@ -60,8 +60,7 @@ npx translify@latest init
 translify init
 ```
 
-Creates a `translify.config.ts` in your project root with full TypeScript
-autocompletion.
+Creates a `translify.config.ts` in your project root.
 
 ### Run a full audit
 
@@ -108,9 +107,9 @@ one language as a single catalogue.
 Create a `translify.config.ts` at your project root:
 
 ```typescript
-import { defineConfig } from '@ndnci/translify/config';
-
-export default defineConfig({
+// Optional editor autocomplete:
+// /** @type {import('@ndnci/translify/config').TranslifyConfig} */
+export default {
   source: {
     include: ['src/**/*.{ts,tsx,js,jsx}', 'app/**/*.{ts,tsx,js,jsx}'],
     exclude: ['**/*.test.*', '**/node_modules/**'],
@@ -138,10 +137,15 @@ export default defineConfig({
     enabled: false,
     provider: 'openai',
     openai_api_key: process.env.OPENAI_API_KEY,
+    openrouter_api_key: process.env.OPENROUTER_API_KEY,
     model: 'gpt-4.1-mini',
     temperature: 0,
+    batch_size: 50,
+    verify: false,
+    verify_model: undefined,
+    values_only: false,
   },
-});
+};
 ```
 
 ---
@@ -151,6 +155,7 @@ export default defineConfig({
 | Command                        | Description                                               |
 | ------------------------------ | --------------------------------------------------------- |
 | `translify init`               | Initialize a config file                                  |
+| `translify config-upgrade`     | Add new config keys without overwriting existing values   |
 | `translify audit`              | Full i18n audit (all checks combined)                     |
 | `translify check-config`       | Validate config values and unknown keys                   |
 | `translify add-missing`        | Add missing keys to translation files across languages    |
@@ -200,14 +205,16 @@ export default defineConfig({
 
 ## AI Translation
 
-Translify integrates with OpenAI to auto-translate your keys:
+Translify integrates with OpenAI and OpenRouter to auto-translate your keys:
 
 ```bash
 translify translate --locale fr
 ```
 
-Requires `ai_translation.enabled = true` in your config and a valid
-`OPENAI_API_KEY`.
+Requires `ai_translation.enabled = true` in your config and the provider API key
+(`OPENAI_API_KEY` or `OPENROUTER_API_KEY`). OpenRouter can use any model slug
+from its catalogue, for example `anthropic/claude-sonnet-4` or
+`openai/gpt-4.1-mini`.
 
 ---
 
@@ -230,7 +237,7 @@ This repository is a monorepo. The following packages are published:
 - [x] Key extraction from TS/JS/TSX/JSX
 - [x] Translation file sync
 - [x] Unused / missing / duplicate detection
-- [x] AI translation via OpenAI
+- [x] AI translation via OpenAI and OpenRouter
 - [x] Full audit command
 - [ ] Vue SFC parser
 - [ ] Angular template parser

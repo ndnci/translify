@@ -10,7 +10,7 @@ has a single responsibility, and the CLI is just a thin command layer on top.
 ┌──────────────────────────────────────────────────────────┐
 │                     @ndnci/translify                     │
 │                    (packages/cli)                        │
-│  Commander.js · Chalk · Ora · 10 commands                │
+│  Commander.js · Chalk · Ora · command modules            │
 └──────────┬──────────┬──────────┬──────────────────────────┘
            │          │          │
            ▼          ▼          ▼
@@ -18,9 +18,9 @@ has a single responsibility, and the CLI is just a thin command layer on top.
 │ translify-   │ │translify- │ │  translify-config  │
 │    core      │ │    ai     │ │  (packages/config) │
 │              │ │           │ │                    │
-│ Scanner      │ │ OpenAI    │ │ Zod schema         │
-│ Parser       │ │ Provider  │ │ Config loader      │
-│ Extractor    │ │ Translator│ │ defineConfig()     │
+│ Scanner      │ │ Providers │ │ Zod schema         │
+│ Parser       │ │ OpenAI    │ │ Config loader      │
+│ Extractor    │ │ OpenRouter│ │ defineConfig shim  │
 │ Sync         │ └─────┬─────┘ └──────────┬─────────┘
 │ Detection    │       │                  │
 │ Optimizer    │       │                  │
@@ -67,7 +67,7 @@ The **configuration layer**. Handles:
   `jiti` (TS/JS) or JSON.parse (JSON)
 - **Config resolver** — composes loading + validation into a single
   `resolveConfig()` call used by all commands
-- **`defineConfig()`** — type-safe helper for user config files
+- **`defineConfig()`** — compatibility helper for function-wrapped user configs
 
 ### `@ndnci/translify-core`
 
@@ -92,6 +92,8 @@ The **AI translation layer**:
 - **`BaseTranslationProvider`** — abstract contract all providers implement
 - **`OpenAIProvider`** — OpenAI SDK integration with JSON mode, retry-safe,
   preserves interpolation variables
+- **`OpenRouterProvider`** — official OpenRouter SDK integration with model
+  slugs, token usage, and USD cost metadata
 - **`translateMissingKeys()`** — batching orchestrator
 
 To add a new provider: extend `BaseTranslationProvider` and register it in
