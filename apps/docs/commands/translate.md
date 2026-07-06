@@ -23,6 +23,9 @@ translify translate --dry-run
 
 # Re-translate all keys (including already-translated ones)
 translify translate --all
+
+# Keep the old compact spinner-only progress output
+translify translate --no-details
 ```
 
 ## How it works
@@ -43,8 +46,13 @@ merged reference-language catalogue.
 | ----------------- | -------------------------------------------- |
 | `--locale <lang>` | Only translate a specific language           |
 | `--all`           | Re-translate all keys, not just missing ones |
+| `--no-details`    | Use compact spinner-only progress output     |
 | `--dry-run`       | Preview without writing                      |
 | `-c, --config`    | Path to config file                          |
+
+By default, `translate` shows a detailed progress view grouped by locale, with
+one progress bar per translation file and counts like `(126/2396)` for
+translated keys versus total keys to translate.
 
 ## Providers
 

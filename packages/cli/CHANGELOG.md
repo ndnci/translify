@@ -6,6 +6,9 @@
 
 - Show provider error details from OpenAI/OpenRouter failures, including status,
   code, provider message, and response body when SDKs expose them.
+- Show detailed `translate` progress by default, grouped by locale with one
+  progress bar and translated/total count per file. Pass `--no-details` to keep
+  the compact spinner-only output.
 - Load `.env`, `.env.local`, `.env.{NODE_ENV}`, and
   `.env.{NODE_ENV}.local` before evaluating `translify.config.*`, while keeping
   already-exported shell variables as the highest priority.

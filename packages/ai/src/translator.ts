@@ -33,6 +33,8 @@ export interface TranslateOptions {
   /** Optional verification model override */
   verifyModel?: string;
   dryRun?: boolean;
+  /** Called as files and batches move through translation */
+  onProgress?: (event: TranslateProgressEvent) => void;
 }
 
 export interface TranslateFileResult {
@@ -40,6 +42,32 @@ export interface TranslateFileResult {
   file: string;
   translatedKeys: number;
   skippedKeys: number;
+  usage?: TranslationUsage;
+}
+
+export interface TranslateProgressFile {
+  language: string;
+  file: string;
+  translatedKeys: number;
+  totalKeys: number;
+}
+
+export type TranslateProgressEvent =
+  | { type: 'start'; files: TranslateProgressFile[] }
+  | { type: 'file-start'; file: TranslateProgressFile }
+  | { type: 'file-progress'; file: TranslateProgressFile }
+  | { type: 'file-complete'; file: TranslateProgressFile }
+  | { type: 'complete'; files: TranslateProgressFile[] };
+
+interface TranslateFilePlan {
+  language: string;
+  file: string;
+  path: string;
+  fileFlat: Record<string, string>;
+  referenceFlat: Record<string, string>;
+  keys: string[];
+  toTranslate: Record<string, string>;
+  translatedKeys: number;
   usage?: TranslationUsage;
 }
 
@@ -98,7 +126,7 @@ export async function translateMissingKeys(
     return true;
   });
 
-  for (const file of targets) {
+  const plans = targets.map((file): TranslateFilePlan => {
     const fileFlat = flattenTranslations(file.data);
     const referenceFile = referenceBySignature.get(translationFileSignature(file));
     const referenceFlat = referenceFile
@@ -116,44 +144,86 @@ export async function translateMissingKeys(
       toTranslate[key] = sourceValue;
     }
 
+    return {
+      language: file.language,
+      file: file.path,
+      path: file.path,
+      fileFlat,
+      referenceFlat,
+      keys: Object.keys(toTranslate),
+      toTranslate,
+      translatedKeys: 0,
+    };
+  });
+
+  emitProgress(options, {
+    type: 'start',
+    files: plans.map(progressFileFromPlan),
+  });
+
+  for (const plan of plans) {
     const batchSize = options.batchSize ?? 50;
-    const keys = Object.keys(toTranslate);
-    let translatedCount = 0;
-    let usage: TranslationUsage | undefined;
+    const keys = plan.keys;
+
+    emitProgress(options, { type: 'file-start', file: progressFileFromPlan(plan) });
 
     for (let i = 0; i < keys.length; i += batchSize) {
       const batchKeys = keys.slice(i, i + batchSize);
-      const batchEntries = Object.fromEntries(batchKeys.map((k) => [k, toTranslate[k]!]));
+      const batchEntries = Object.fromEntries(batchKeys.map((k) => [k, plan.toTranslate[k]!]));
 
       const response = await provider.translate({
         entries: batchEntries,
         sourceLanguage: options.defaultLanguage,
-        targetLanguage: file.language,
+        targetLanguage: plan.language,
         ...(options.valuesOnly !== undefined && { valuesOnly: options.valuesOnly }),
         ...(options.verify !== undefined && { verify: options.verify }),
         ...(options.verifyModel !== undefined && { verifyModel: options.verifyModel }),
       });
 
-      Object.assign(fileFlat, response.translations);
-      translatedCount += batchKeys.length;
-      usage = mergeTranslationUsage(usage, response.usage);
+      Object.assign(plan.fileFlat, response.translations);
+      plan.translatedKeys += batchKeys.length;
+      const usage = mergeTranslationUsage(plan.usage, response.usage);
+      if (usage) {
+        plan.usage = usage;
+      }
+      emitProgress(options, { type: 'file-progress', file: progressFileFromPlan(plan) });
     }
 
-    if (!options.dryRun && translatedCount > 0) {
-      const updated = unflattenTranslations(fileFlat);
-      writeFileSync(file.path, JSON.stringify(updated, null, 2) + '\n', 'utf8');
+    if (!options.dryRun && plan.translatedKeys > 0) {
+      const updated = unflattenTranslations(plan.fileFlat);
+      writeFileSync(plan.path, JSON.stringify(updated, null, 2) + '\n', 'utf8');
     }
+
+    emitProgress(options, { type: 'file-complete', file: progressFileFromPlan(plan) });
 
     results.push({
-      language: file.language,
-      file: file.path,
-      translatedKeys: translatedCount,
-      skippedKeys: Object.keys(referenceFlat).length - translatedCount,
-      ...(usage && { usage }),
+      language: plan.language,
+      file: plan.path,
+      translatedKeys: plan.translatedKeys,
+      skippedKeys: Object.keys(plan.referenceFlat).length - plan.translatedKeys,
+      ...(plan.usage && { usage: plan.usage }),
     });
   }
 
+  emitProgress(options, {
+    type: 'complete',
+    files: plans.map(progressFileFromPlan),
+  });
+
   return results;
+}
+
+function emitProgress(options: TranslateOptions, event: TranslateProgressEvent): void {
+  options.onProgress?.(event);
+}
+
+function progressFileFromPlan(plan: TranslateFilePlan): TranslateProgressFile {
+  return {
+    language: plan.language,
+    file: plan.file,
+    translatedKeys: plan.translatedKeys,
+    totalKeys: plan.keys.length,
+  };
 }
 
 function groupFilesByLanguage(files: TranslationFile[]): Map<string, TranslationFile[]> {
