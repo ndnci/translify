@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { validateConfig } from '../resolver.js';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { resolveConfig, validateConfig } from '../resolver.js';
 import { ConfigValidationError } from '@ndnci/translify-shared';
 
 describe('validateConfig', () => {
@@ -101,5 +104,72 @@ describe('validateConfig', () => {
 
     expect(config.translations.split.depth).toBe(1);
     expect(config.translations.split.groups).toHaveLength(2);
+  });
+
+  it('loads .env files before evaluating config process.env references', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'translify-env-'));
+    const envKey = 'TRANSLIFY_TEST_OPENAI_API_KEY';
+    const previous = process.env[envKey];
+    delete process.env[envKey];
+
+    writeFileSync(join(cwd, '.env'), `${envKey}=sk-from-env\n`, 'utf8');
+    writeFileSync(join(cwd, '.env.local'), `${envKey}=sk-from-env-local\n`, 'utf8');
+    writeFileSync(
+      join(cwd, 'translify.config.js'),
+      `
+        export default {
+          ai_translation: {
+            enabled: true,
+            provider: 'openai',
+            openai_api_key: process.env.${envKey},
+          },
+        };
+      `,
+      'utf8',
+    );
+
+    try {
+      const { config } = await resolveConfig({ cwd });
+      expect(config.ai_translation.openai_api_key).toBe('sk-from-env-local');
+    } finally {
+      if (previous === undefined) {
+        delete process.env[envKey];
+      } else {
+        process.env[envKey] = previous;
+      }
+    }
+  });
+
+  it('keeps existing shell environment variables over .env files', async () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'translify-env-'));
+    const envKey = 'TRANSLIFY_TEST_OPENROUTER_API_KEY';
+    const previous = process.env[envKey];
+    process.env[envKey] = 'sk-from-shell';
+
+    writeFileSync(join(cwd, '.env'), `${envKey}=sk-from-env\n`, 'utf8');
+    writeFileSync(
+      join(cwd, 'translify.config.js'),
+      `
+        export default {
+          ai_translation: {
+            enabled: true,
+            provider: 'openrouter',
+            openrouter_api_key: process.env.${envKey},
+          },
+        };
+      `,
+      'utf8',
+    );
+
+    try {
+      const { config } = await resolveConfig({ cwd });
+      expect(config.ai_translation.openrouter_api_key).toBe('sk-from-shell');
+    } finally {
+      if (previous === undefined) {
+        delete process.env[envKey];
+      } else {
+        process.env[envKey] = previous;
+      }
+    }
   });
 });

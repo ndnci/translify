@@ -56,6 +56,11 @@ Currently supported:
 When the provider reports usage, the command prints prompt/completion/total
 tokens. OpenRouter also reports USD cost when available.
 
+If the provider rejects a request, Translify prints SDK details such as HTTP
+status, provider code, provider message, and response body when available. This
+is especially useful for invalid model slugs, quota failures, or provider-side
+validation errors.
+
 ## AI translation options
 
 ```ts

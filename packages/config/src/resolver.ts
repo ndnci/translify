@@ -4,7 +4,13 @@ import {
   type TranslifyConfigInput,
   ConfigValidationError,
 } from '@ndnci/translify-shared';
-import { resolveConfigPath, loadRawConfig, type ResolvedConfigPath } from './loader.js';
+import { dirname } from 'node:path';
+import {
+  resolveConfigPath,
+  loadRawConfig,
+  loadEnvFiles,
+  type ResolvedConfigPath,
+} from './loader.js';
 
 export interface ResolveOptions {
   /** Working directory to search from */
@@ -34,6 +40,7 @@ export interface ResolvedConfig {
  */
 export async function resolveConfig(options: ResolveOptions): Promise<ResolvedConfig> {
   const resolved = resolveConfigPath(options.cwd, options.configPath);
+  loadEnvFiles({ cwd: options.cwd, configDir: dirname(resolved.path) });
   const raw = await loadRawConfig(resolved);
   const config = validateConfig(raw);
 

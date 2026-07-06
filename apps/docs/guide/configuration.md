@@ -141,6 +141,12 @@ export default {
 | `OPENAI_API_KEY`     | OpenAI API key for AI translation     |
 | `OPENROUTER_API_KEY` | OpenRouter API key for AI translation |
 
+Translify loads `.env`, `.env.local`, `.env.{NODE_ENV}`, and
+`.env.{NODE_ENV}.local` before evaluating `translify.config.*`, so
+`process.env.OPENAI_API_KEY` and `process.env.OPENROUTER_API_KEY` work from
+project env files. Variables already exported in your shell take priority over
+values from those files.
+
 ## Upgrading existing configs
 
 When Translify adds new config keys, run:
