@@ -14,5 +14,5 @@ export { registerAuditCommand } from './audit.js';
 export { registerAuditFixCommand } from './audit-fix.js';
 export { registerHardcodedFixCommand } from './hardcoded-fix.js';
 export { registerSplitTranslationsCommand } from './split-translations.js';
-export { registerUpgradeCommand } from './upgrade.js';
+export { registerUpgradeCommand, getInstalledVersion } from './upgrade.js';
 export { registerVersionCommand } from './version.js';

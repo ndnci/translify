@@ -1,6 +1,4 @@
-import { defineConfig } from '@ndnci/translify/config';
-
-export default defineConfig({
+export default {
   source: {
     include: ['src/**/*.{ts,tsx}'],
     exclude: ['**/*.test.*', '**/node_modules/**'],
@@ -24,4 +22,4 @@ export default defineConfig({
     model: 'gpt-4.1-mini',
     temperature: 0,
   },
-});
+};

@@ -15,6 +15,17 @@
   OpenRouter USD cost when available.
 - Improve `translate` for split/multi-file translation projects by matching
   target files to their corresponding default-language source files.
+- Add strict config validation, split-file translation support with
+  `split-translations`, hardcoded text checks and `hardcoded-fix`, deterministic
+  `audit-fix`, language creation, and improved audit reporting.
+
+### Patch Changes
+
+- Read the CLI version from `package.json` at runtime instead of a
+  hand-maintained constant, so `translify --version` can't drift out of sync
+  with the published package version. Also drop the leftover `defineConfig`
+  wrapper from the Next.js demo config in favor of the recommended plain
+  `export default { ... }` form.
 
 ## 0.5.2
 
@@ -39,8 +50,8 @@
 
 - Add strict config validation and a new `check-config` command that catches
   unknown keys, typos, invalid values, and load errors.
-- Add split-file translation support. Translation globs now default to
-  recursive JSON files, audits merge all files for the same language, and
+- Add split-file translation support. Translation globs now default to recursive
+  JSON files, audits merge all files for the same language, and
   `split-translations` can break large locale files into context files with
   custom grouping rules such as `tools=tool|foo`.
 - Add `check-hardcoded` and include hardcoded user-facing text in `audit`, with
@@ -61,8 +72,8 @@
 
 - Fix false positives in `check-unused`/`check-missing`/`audit` when a project
   uses a custom wrapper hook that returns multiple translate functions bound to
-  different namespaces (e.g. `const { t, tc } = useFeatureI18n("WidgetPanel")` where
-  `tc` is internally hardcoded to a shared `"Shared"` namespace).
+  different namespaces (e.g. `const { t, tc } = useFeatureI18n("WidgetPanel")`
+  where `tc` is internally hardcoded to a shared `"Shared"` namespace).
 
   Instead of a config-level workaround, extraction now resolves the wrapper
   hook's own definition — following relative imports and `tsconfig.json` path

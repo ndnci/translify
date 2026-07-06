@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { VERSION, CLI_NAME } from '@ndnci/translify-shared';
+import { CLI_NAME } from '@ndnci/translify-shared';
 import { createLogger } from './ui/logger.js';
 import { c } from './ui/colors.js';
 import {
@@ -21,6 +21,7 @@ import {
   registerSplitTranslationsCommand,
   registerUpgradeCommand,
   registerVersionCommand,
+  getInstalledVersion,
 } from './commands/index.js';
 
 export function createCli(): Command {
@@ -31,7 +32,7 @@ export function createCli(): Command {
     .description(
       `${c.brand('Translify')} — intelligent i18n CLI for extracting, syncing, and translating`,
     )
-    .version(VERSION, '-V, --version', 'Print the Translify version')
+    .version(getInstalledVersion() ?? 'unknown', '-V, --version', 'Print the Translify version')
     .helpOption('-h, --help', 'Show help')
     // ── Global options ──────────────────────────────────────────────────────
     .option(

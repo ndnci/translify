@@ -59,6 +59,5 @@ export const DEFAULT_TRANSLATION_FILES = [
   'i18n/**/*.json',
 ];
 
-export const VERSION = '0.6.0';
 export const CLI_NAME = 'translify';
 export const PACKAGE_NAME = '@ndnci/translify';
