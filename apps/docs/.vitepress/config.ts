@@ -1,4 +1,7 @@
 import { defineConfig } from 'vitepress';
+import { getCliVersion } from './lib/cli-version';
+
+const cliVersion = getCliVersion();
 
 export default defineConfig({
   title: 'Translify',
@@ -23,7 +26,7 @@ export default defineConfig({
       { text: 'Commands', link: '/commands/audit' },
       { text: 'Config', link: '/guide/configuration' },
       {
-        text: 'v0.6.0',
+        text: `v${cliVersion}`,
         items: [
           { text: 'Changelog', link: 'https://github.com/ndnci/translify/releases' },
           {
