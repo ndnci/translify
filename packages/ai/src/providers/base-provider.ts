@@ -15,6 +15,8 @@ export interface TranslationRequest {
   verify?: boolean;
   /** Model used for verification; defaults to the translation model */
   verifyModel?: string;
+  /** Optional additional localization guidance for this request */
+  instructions?: string;
 }
 
 export interface TranslationUsage {

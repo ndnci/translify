@@ -37,6 +37,7 @@ hardest parts of i18n:
 - **Detect** unused, missing, duplicate, and cross-locale inconsistent
   translation entries, plus hardcoded user-facing text
 - **Translate** automatically via AI providers (OpenAI or OpenRouter)
+- **Edit and translate visually** in a local browser studio
 - **Audit** your entire i18n health in one command
 - **Fix** deterministic audit issues with `--dry-run` previews
 
@@ -164,6 +165,7 @@ export default {
 | `translify audit-fix`          | Fix deterministic audit issues                            |
 | `translify hardcoded-fix`      | Replace hardcoded text with i18n calls                    |
 | `translify translate`          | Auto-translate missing keys via AI                        |
+| `translify studio`             | Open the local browser translation studio                 |
 | `translify check-missing`      | Detect missing translation keys                           |
 | `translify check-unused`       | Detect unused translation keys                            |
 | `translify check-duplicates`   | Detect duplicate translation values and duplicate keys    |
@@ -243,7 +245,7 @@ This repository is a monorepo. The following packages are published:
 - [ ] Angular template parser
 - [ ] PHP/Laravel support
 - [ ] Translation memory / TM integration
-- [ ] Web dashboard
+- [x] Local translation studio
 - [ ] VS Code extension
 
 ---

@@ -22,6 +22,7 @@ import {
   registerUpgradeCommand,
   registerVersionCommand,
   getInstalledVersion,
+  registerStudioCommand,
 } from './commands/index.js';
 
 export function createCli(): Command {
@@ -63,6 +64,7 @@ ${c.dim('Actions:')}
   ${c.brand('audit-fix')}     Fix deterministic audit issues
   ${c.brand('hardcoded-fix')} Replace hardcoded text with i18n calls
   ${c.brand('translate')}     Auto-translate via AI
+  ${c.brand('studio')}        Open the browser translation studio
   ${c.brand('optimize')}      Sort keys and flag empty entries in translation files
   ${c.brand('version')}       Print the installed version and check for updates
   ${c.brand('upgrade')}       Update the CLI to the latest version
@@ -106,6 +108,7 @@ ${c.dim('Documentation:')} https://ndnci.github.io/translify/commands/
   registerSplitTranslationsCommand(program, getLogger());
   registerUpgradeCommand(program, getLogger());
   registerVersionCommand(program, getLogger());
+  registerStudioCommand(program, getLogger());
 
   return program;
 }

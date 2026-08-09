@@ -57,6 +57,7 @@ export default defineConfig({
           { text: 'audit-fix', link: '/commands/audit-fix' },
           { text: 'hardcoded-fix', link: '/commands/hardcoded-fix' },
           { text: 'translate', link: '/commands/translate' },
+          { text: 'studio', link: '/commands/studio' },
           { text: 'check-config', link: '/commands/check-config' },
           { text: 'check-missing', link: '/commands/check-missing' },
           { text: 'check-unused', link: '/commands/check-unused' },

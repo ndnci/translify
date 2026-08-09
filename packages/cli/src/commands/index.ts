@@ -16,3 +16,4 @@ export { registerHardcodedFixCommand } from './hardcoded-fix.js';
 export { registerSplitTranslationsCommand } from './split-translations.js';
 export { registerUpgradeCommand, getInstalledVersion } from './upgrade.js';
 export { registerVersionCommand } from './version.js';
+export { registerStudioCommand } from './studio.js';

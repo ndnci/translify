@@ -170,16 +170,22 @@ export class OpenRouterProvider extends BaseTranslationProvider {
   }
 
   private buildPrompt(request: TranslationRequest): string {
+    const instructions = request.instructions?.trim()
+      ? `Additional instructions: ${request.instructions.trim()}\n`
+      : '';
     if (request.valuesOnly) {
       return (
         `Translate each value in this JSON array from "${request.sourceLanguage}" to "${request.targetLanguage}".\n` +
+        instructions +
         'Return ONLY a JSON object shaped as {"items":[...]} with the same length and order.\n\n' +
         JSON.stringify(Object.values(request.entries), null, 2)
       );
     }
 
     return (
-      `Translate the following JSON from "${request.sourceLanguage}" to "${request.targetLanguage}".\n\n` +
+      `Translate the following JSON from "${request.sourceLanguage}" to "${request.targetLanguage}".\n` +
+      instructions +
+      '\n' +
       JSON.stringify(request.entries, null, 2)
     );
   }
