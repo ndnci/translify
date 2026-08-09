@@ -42,4 +42,14 @@ export default defineConfig([
     clean: false,
     noExternal: ['@ndnci/translify-shared', '@ndnci/translify-config'],
   },
+  // Browser-safe country/language data export: `@ndnci/translify/locales`
+  {
+    entry: { 'locales-entry': 'src/locales-entry.ts' },
+    format: ['cjs', 'esm'],
+    target: 'es2022',
+    platform: 'neutral',
+    dts: true,
+    sourcemap: false,
+    clean: false,
+  },
 ]);

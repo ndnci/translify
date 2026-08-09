@@ -44,6 +44,7 @@ export default defineConfig({
           { text: 'Installation', link: '/guide/installation' },
           { text: 'Quick Start', link: '/guide/getting-started' },
           { text: 'Configuration', link: '/guide/configuration' },
+          { text: 'Countries & Languages', link: '/guide/countries-and-languages' },
         ],
       },
       {

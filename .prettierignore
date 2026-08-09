@@ -5,6 +5,8 @@ coverage
 .next
 .vitepress/cache
 .vitepress/dist
+**/.vitepress/.temp/**
 *.lock
 pnpm-lock.yaml
 CHANGELOG.md
+packages/cli/src/locales/data.json

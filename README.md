@@ -43,6 +43,16 @@ hardest parts of i18n:
 
 Built for teams that care about DX and translation quality.
 
+Translify also exports a normalized, browser-safe world locale database with 250
+country/territory entries and the complete current language registry:
+
+```ts
+import { getCountry, getLanguage } from '@ndnci/translify/locales';
+
+getCountry('FR'); // names, codes, currencies, date/week formats, time zones, languages…
+getLanguage('ce'); // Chechen (ISO aliases are supported)
+```
+
 ---
 
 ## Quick Start
@@ -231,6 +241,9 @@ This repository is a monorepo. The following packages are published:
 | `@ndnci/translify-config` | Config loading and validation      |
 | `@ndnci/translify-ai`     | AI translation providers           |
 | `@ndnci/translify-shared` | Shared types and utilities         |
+
+The main package also exposes `@ndnci/translify/locales` for country and
+language metadata without loading it into the CLI command bundle.
 
 ---
 

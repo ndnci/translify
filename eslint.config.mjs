@@ -44,9 +44,12 @@ export default [
       '**/node_modules/**',
       '**/coverage/**',
       '**/.turbo/**',
+      '**/.next/**',
       '**/build/**',
       '**/.vitepress/cache/**',
       '**/.vitepress/dist/**',
+      '**/.vitepress/.temp/**',
+      '**/next-env.d.ts',
     ],
   },
 ];

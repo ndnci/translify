@@ -34,6 +34,11 @@
       "types": "./dist/config-entry.d.ts",
       "import": "./dist/config-entry.js",
       "require": "./dist/config-entry.cjs"
+    },
+    "./locales": {
+      "types": "./dist/locales-entry.d.ts",
+      "import": "./dist/locales-entry.js",
+      "require": "./dist/locales-entry.cjs"
     }
   },
   "files": [
