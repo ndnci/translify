@@ -19,6 +19,8 @@
     locale switching, and SEO alternate links.
   - Add a Node/serverless entry that automatically loads the centralized config
     and JSON catalogues for request-isolated server translation.
+  - Add reactive Vue/Nuxt, Svelte/SvelteKit, Angular, and Solid/SolidStart
+    adapters with optional framework peer dependencies.
 
 ### Patch Changes
 

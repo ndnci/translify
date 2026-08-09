@@ -12,7 +12,11 @@
     "next-intl",
     "i18next",
     "react",
-    "nextjs"
+    "nextjs",
+    "vue",
+    "svelte",
+    "angular",
+    "solidjs"
   ],
   "homepage": "https://ndnci.github.io/translify/",
   "repository": {
@@ -64,6 +68,26 @@
       "types": "./dist/server-entry.d.ts",
       "import": "./dist/server-entry.js",
       "require": "./dist/server-entry.cjs"
+    },
+    "./vue": {
+      "types": "./dist/vue-entry.d.ts",
+      "import": "./dist/vue-entry.js",
+      "require": "./dist/vue-entry.cjs"
+    },
+    "./svelte": {
+      "types": "./dist/svelte-entry.d.ts",
+      "import": "./dist/svelte-entry.js",
+      "require": "./dist/svelte-entry.cjs"
+    },
+    "./angular": {
+      "types": "./dist/angular-entry.d.ts",
+      "import": "./dist/angular-entry.js",
+      "require": "./dist/angular-entry.cjs"
+    },
+    "./solid": {
+      "types": "./dist/solid-entry.d.ts",
+      "import": "./dist/solid-entry.js",
+      "require": "./dist/solid-entry.cjs"
     }
   },
   "sideEffects": [
@@ -99,6 +123,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@angular/core": "^20.3.27",
     "@ndnci/translify-ai": "workspace:*",
     "@ndnci/translify-config": "workspace:*",
     "@ndnci/translify-core": "workspace:*",
@@ -108,15 +133,35 @@
     "@types/react": "^19.0.3",
     "react": "^19.0.0",
     "rimraf": "^6.0.1",
+    "rxjs": "^7.8.2",
+    "solid-js": "^1.9.14",
+    "svelte": "^5.56.8",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "vue": "^3.5.34"
   },
   "peerDependencies": {
-    "react": ">=18.0.0"
+    "@angular/core": ">=18.0.0",
+    "react": ">=18.0.0",
+    "solid-js": ">=1.8.0",
+    "svelte": ">=4.0.0",
+    "vue": ">=3.3.0"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   },

@@ -2,7 +2,7 @@
   "name": "@ndnci/translify-runtime",
   "version": "0.0.1",
   "private": true,
-  "description": "Framework-agnostic, React, and Next.js runtime integrations for Translify",
+  "description": "Framework-agnostic runtime and adapters for React, Next.js, Vue, Svelte, Angular, and Solid",
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -20,6 +20,26 @@
       "types": "./dist/next.d.ts",
       "import": "./dist/next.js",
       "require": "./dist/next.cjs"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.js",
+      "require": "./dist/vue.cjs"
+    },
+    "./svelte": {
+      "types": "./dist/svelte.d.ts",
+      "import": "./dist/svelte.js",
+      "require": "./dist/svelte.cjs"
+    },
+    "./angular": {
+      "types": "./dist/angular.d.ts",
+      "import": "./dist/angular.js",
+      "require": "./dist/angular.cjs"
+    },
+    "./solid": {
+      "types": "./dist/solid.d.ts",
+      "import": "./dist/solid.js",
+      "require": "./dist/solid.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -41,21 +61,42 @@
     "intl-messageformat": "^10.7.18"
   },
   "peerDependencies": {
-    "react": ">=18.0.0"
+    "@angular/core": ">=18.0.0",
+    "react": ">=18.0.0",
+    "solid-js": ">=1.8.0",
+    "svelte": ">=4.0.0",
+    "vue": ">=3.3.0"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
     }
   },
   "devDependencies": {
+    "@angular/core": "^20.3.27",
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rimraf": "^6.0.1",
+    "rxjs": "^7.8.2",
+    "solid-js": "^1.9.14",
+    "svelte": "^5.56.8",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "vue": "^3.5.34"
   }
 }

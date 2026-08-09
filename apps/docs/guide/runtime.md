@@ -155,6 +155,101 @@ function App() {
 }
 ```
 
+## Vue and Nuxt
+
+Install one plugin at application startup. It exposes the same state through
+composables and, for concise templates, through `$t`.
+
+```ts
+import { createVueI18n } from '@ndnci/translify/vue';
+import { i18n } from './i18n';
+
+app.use(createVueI18n(i18n));
+```
+
+```vue
+<script setup lang="ts">
+import { useI18n } from '@ndnci/translify/vue';
+
+const { locale, t } = useI18n();
+</script>
+
+<template>
+  <h1 :lang="locale">{{ t('home.title') }}</h1>
+</template>
+```
+
+Use the same installation line in a client plugin for Nuxt. For Nuxt SSR, create
+the core instance inside the plugin so each request owns its locale state.
+
+## Svelte and SvelteKit
+
+Initialize context once in the root layout. The returned object follows the
+Svelte store contract, so both `$translify.locale` and direct method calls are
+reactive.
+
+```svelte
+<script lang="ts">
+  import { setTranslifyContext } from '@ndnci/translify/svelte';
+  import { i18n } from '$lib/i18n';
+
+  const translify = setTranslifyContext(i18n);
+</script>
+
+<h1 lang={$translify.locale}>{$translify.t('home.title')}</h1>
+<slot />
+```
+
+SvelteKit can create `i18n` from server-loaded messages in `+layout.server.ts`
+and pass only the serializable locale and catalogues to the layout.
+
+## Angular
+
+Register the environment provider once, then inject the signal-backed adapter.
+
+```ts
+// app.config.ts
+export const appConfig: ApplicationConfig = {
+  providers: [provideTranslify(i18n)],
+};
+
+// home.component.ts
+export class HomeComponent {
+  readonly translify = injectTranslify();
+}
+```
+
+```html
+<h1 [attr.lang]="translify.locale()">{{ translify.t('home.title') }}</h1>
+```
+
+The locale signal updates immediately after `i18n.setLocale()`. Angular SSR can
+create one core instance in the request bootstrap providers, avoiding shared
+mutable state.
+
+## Solid and SolidStart
+
+Wrap the application once and use the adapter's reactive primitives anywhere
+below it.
+
+```tsx
+import { TranslifyProvider, useTranslations } from '@ndnci/translify/solid';
+
+render(() => (
+  <TranslifyProvider i18n={i18n}>
+    <App />
+  </TranslifyProvider>
+));
+
+function Title() {
+  const t = useTranslations('home');
+  return <h1>{t('title')}</h1>;
+}
+```
+
+SolidStart should create the underlying instance per server request and pass it
+to the provider during rendering.
+
 ## Next.js App Router
 
 The server helper deliberately creates an isolated translator per request. It
@@ -249,16 +344,18 @@ instances to report structured `TranslifyRuntimeError` values.
 
 ## Integration status
 
-| Environment                     | Status                                                             |
-| ------------------------------- | ------------------------------------------------------------------ |
-| Vanilla JavaScript / TypeScript | Supported                                                          |
-| React 18 and 19                 | Supported                                                          |
-| Next.js App Router, RSC and SSG | Supported                                                          |
-| Node.js, API routes and SSR     | Supported                                                          |
-| Vite zero-config adapter        | Coming soon; the Vanilla and React runtimes already work with Vite |
-| Angular                         | Coming soon                                                        |
-| Symfony                         | Coming soon                                                        |
-| Laravel / PHP                   | Coming soon                                                        |
+| Environment                        | Status                              |
+| ---------------------------------- | ----------------------------------- |
+| Vanilla JavaScript / TypeScript    | Supported                           |
+| React 18/19 and Next.js App Router | Supported, including RSC, SSR & SSG |
+| Vue 3 and Nuxt                     | Supported                           |
+| Svelte 4/5 and SvelteKit           | Supported                           |
+| Angular 18+                        | Supported, including signals & SSR  |
+| Solid and SolidStart               | Supported                           |
+| Vite                               | Supported through client adapters   |
+| Astro                              | Supported through `/server`         |
+| Node.js, API routes and serverless | Supported                           |
+| Symfony and Laravel / PHP runtimes | Planned                             |
 
-Vue, Svelte and other framework adapters can build on the same observable
-Vanilla instance without duplicating ICU or fallback logic.
+Every adapter delegates to the same observable Vanilla core. Applications can
+change framework without changing catalogue syntax or translation behavior.

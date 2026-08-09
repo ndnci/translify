@@ -232,22 +232,20 @@ export default {
 
 ## Framework Support
 
-| Framework / Library   | Status       |
-| --------------------- | ------------ |
-| React                 | ✅ Supported |
-| Next.js               | ✅ Supported |
-| TypeScript            | ✅ Supported |
-| JavaScript            | ✅ Supported |
-| VanillaJS runtime     | ✅ Supported |
-| i18next               | ✅ Supported |
-| next-intl             | ✅ Supported |
-| Localized URL routing | ✅ Supported |
-| Vite adapter          | 🔜 Planned   |
-| Vue                   | 🔜 Planned   |
-| Angular               | 🔜 Planned   |
-| Svelte                | 🔜 Planned   |
-| Symfony               | 🔜 Planned   |
-| Laravel / PHP         | 🔜 Planned   |
+| Framework / environment | Status       |
+| ----------------------- | ------------ |
+| Vanilla JavaScript      | ✅ Supported |
+| React / Next.js         | ✅ Supported |
+| Vue / Nuxt              | ✅ Supported |
+| Svelte / SvelteKit      | ✅ Supported |
+| Angular                 | ✅ Supported |
+| Solid / SolidStart      | ✅ Supported |
+| Vite                    | ✅ Supported |
+| Astro                   | ✅ Supported |
+| Node / serverless / SSR | ✅ Supported |
+| Localized URL routing   | ✅ Supported |
+| Symfony                 | 🔜 Planned   |
+| Laravel / PHP           | 🔜 Planned   |
 
 ---
 
@@ -284,8 +282,10 @@ This repository is a monorepo. The following packages are published:
 | `@ndnci/translify-shared` | Shared types and utilities         |
 
 The main package also exposes `@ndnci/translify/locales` for country and
-language metadata, plus `/vanilla`, `/react`, `/next`, and `/server` runtime
-entry points, without loading them into the CLI command bundle.
+language metadata, plus `/vanilla`, `/react`, `/next`, `/vue`, `/svelte`,
+`/angular`, `/solid`, and `/server` runtime entry points, without loading them
+into the CLI command bundle. Framework dependencies are optional peers: only the
+adapter an application imports is required.
 
 ---
 
@@ -296,9 +296,10 @@ entry points, without loading them into the CLI command bundle.
 - [x] Unused / missing / duplicate detection
 - [x] AI translation via OpenAI and OpenRouter
 - [x] Full audit command
-- [x] Vanilla JavaScript, React, and Next.js translation runtimes
-- [ ] Vue SFC parser
-- [ ] Angular template parser
+- [x] Vanilla JavaScript, React, Next.js, Vue, Svelte, Angular, and Solid
+      runtimes
+- [ ] Vue SFC static extraction
+- [ ] Angular template static extraction
 - [ ] PHP/Laravel support
 - [ ] Translation memory / TM integration
 - [x] Local translation studio
