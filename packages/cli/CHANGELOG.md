@@ -1,5 +1,25 @@
 # @ndnci/translify
 
+## 1.0.0
+
+### Major Changes
+
+- 240935e: Release Translify 1.0 as a complete translation toolkit:
+  - Add the local translation Studio with catalogue navigation, filtering,
+    manual editing, AI suggestions, regeneration, token usage, and cost details.
+  - Export comprehensive country and language metadata, including regional and
+    minority languages, from `@ndnci/translify/locales`.
+  - Add a serverless browser translator suitable for GitHub Pages, with direct
+    OpenRouter requests and optional IndexedDB key persistence.
+  - Add framework-agnostic, React, and Next.js application runtimes with ICU
+    messages, locale fallback, SSR-safe formatting, and request-isolated server
+    helpers.
+
+### Patch Changes
+
+- e99d3ab: Recommend DeepSeek V4 Flash for OpenRouter translation, use GPT-5.6
+  Luna as the direct OpenAI default, and document real translation costs.
+
 ## 0.6.1
 
 ### Patch Changes
@@ -15,9 +35,9 @@
   specific translation files.
 - Save translate checkpoints in `.translify/translate-checkpoint.json` and
   resume failed/interrupted runs via prompt, `--resume`, or `--restart`.
-- Load `.env`, `.env.local`, `.env.{NODE_ENV}`, and
-  `.env.{NODE_ENV}.local` before evaluating `translify.config.*`, while keeping
-  already-exported shell variables as the highest priority.
+- Load `.env`, `.env.local`, `.env.{NODE_ENV}`, and `.env.{NODE_ENV}.local`
+  before evaluating `translify.config.*`, while keeping already-exported shell
+  variables as the highest priority.
 
 ## 0.6.0
 

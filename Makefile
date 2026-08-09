@@ -3,6 +3,7 @@
 # ── Variables ─────────────────────────────────────────────────────────────────
 PACKAGE := @ndnci/translify
 FILTER  := --filter $(PACKAGE)
+PUBLISH_FLAGS := --access public --no-git-checks
 
 # ── Development ───────────────────────────────────────────────────────────────
 
@@ -29,25 +30,27 @@ clean:          ## Remove all dist folders and node_modules
 # packages/cli/package.json matches the channel (e.g. alpha needs a -alpha.N
 # version), isn't already published, that build/typecheck/lint/test all pass,
 # and that you're logged in to npm — before anything is actually published.
+# Local publishing uses the authenticated npm session. The GitHub Actions
+# trusted publisher adds provenance automatically through OIDC.
 
 check-publish-%:
 	@bash scripts/check-publish.sh $*
 
 npm-publish: check-publish-latest    ## Build and publish $(PACKAGE) as stable (tag: latest)
 	pnpm turbo build --filter="$(PACKAGE)..."
-	pnpm $(FILTER) publish --access public --provenance --no-git-checks
+	pnpm $(FILTER) publish $(PUBLISH_FLAGS)
 
 npm-publish-alpha: check-publish-alpha ## Build and publish $(PACKAGE) as pre-release (tag: alpha)
 	pnpm turbo build --filter="$(PACKAGE)..."
-	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag alpha
+	pnpm $(FILTER) publish $(PUBLISH_FLAGS) --tag alpha
 
 npm-publish-beta: check-publish-beta  ## Build and publish $(PACKAGE) as pre-release (tag: beta)
 	pnpm turbo build --filter="$(PACKAGE)..."
-	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag beta
+	pnpm $(FILTER) publish $(PUBLISH_FLAGS) --tag beta
 
 npm-publish-rc: check-publish-rc      ## Build and publish $(PACKAGE) as release candidate (tag: rc)
 	pnpm turbo build --filter="$(PACKAGE)..."
-	pnpm $(FILTER) publish --access public --provenance --no-git-checks --tag rc
+	pnpm $(FILTER) publish $(PUBLISH_FLAGS) --tag rc
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify",
-  "version": "0.6.1",
+  "version": "1.0.0",
   "description": "Complete i18n runtime and CLI for Vanilla JavaScript, React, and Next.js",
   "keywords": [
     "i18n",
