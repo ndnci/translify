@@ -1,7 +1,7 @@
 {
   "name": "@ndnci/translify",
   "version": "1.0.0",
-  "description": "Complete i18n runtime and CLI for Vanilla JavaScript, React, and Next.js",
+  "description": "Complete client and server i18n runtime, framework adapters, studio, and CLI",
   "keywords": [
     "i18n",
     "cli",
@@ -59,6 +59,11 @@
       "types": "./dist/next-entry.d.ts",
       "import": "./dist/next-entry.js",
       "require": "./dist/next-entry.cjs"
+    },
+    "./server": {
+      "types": "./dist/server-entry.d.ts",
+      "import": "./dist/server-entry.js",
+      "require": "./dist/server-entry.cjs"
     }
   },
   "sideEffects": [

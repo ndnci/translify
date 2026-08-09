@@ -88,4 +88,28 @@ export default defineConfig([
     clean: false,
     noExternal: ['@ndnci/translify-runtime'],
   },
+  // Node/serverless helpers with automatic config and catalogue discovery.
+  {
+    entry: { 'server-entry': 'src/server-entry.ts' },
+    format: ['cjs', 'esm'],
+    target: 'node22',
+    platform: 'node',
+    dts: {
+      resolve: [
+        '@ndnci/translify-shared',
+        '@ndnci/translify-config',
+        '@ndnci/translify-core',
+        '@ndnci/translify-runtime',
+      ],
+    },
+    sourcemap: false,
+    clean: false,
+    noExternal: [
+      '@ndnci/translify-shared',
+      '@ndnci/translify-config',
+      '@ndnci/translify-core',
+      '@ndnci/translify-runtime',
+    ],
+    external: ['@babel/parser', '@babel/traverse', '@babel/types', 'fast-glob', 'jiti', 'zod'],
+  },
 ]);

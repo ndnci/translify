@@ -207,6 +207,36 @@ type guard, and `generateStaticParams()` returns every configured locale for
 SSG. Use `createI18nRouter(config)` from the same `/next` entry point in the
 framework middleware; no second routing configuration is required.
 
+## Node, serverless and API routes
+
+The server entry discovers `translify.config.*` and every configured catalogue
+from the project directory. It creates fresh state per call, so concurrent
+requests cannot leak their locale into one another.
+
+```ts
+import { getServerTranslations } from '@ndnci/translify/server';
+
+export async function GET(request: Request) {
+  const t = await getServerTranslations({ request, namespace: 'api' });
+  return Response.json({ message: t('welcome') });
+}
+```
+
+Pass `locale` when it already comes from a trusted route parameter. Otherwise,
+the standard Web `Request` is resolved using the localized URL, preference
+cookie and `Accept-Language` behavior from `translify.config.ts`.
+
+```ts
+import { createServerI18n } from '@ndnci/translify/server';
+
+const i18n = await createServerI18n({ locale: 'fr' });
+const subject = i18n.t('email.subject', { name: customer.name });
+```
+
+The server entry is Node-only because it reads local JSON catalogues. Edge
+runtimes should bundle messages and use the browser-safe `/vanilla` runtime;
+both expose the same translation, namespace and formatting APIs.
+
 ## Missing messages and fallback
 
 Fallback happens for each message in this order: exact locale (`fr-CA`), base
@@ -224,6 +254,7 @@ instances to report structured `TranslifyRuntimeError` values.
 | Vanilla JavaScript / TypeScript | Supported                                                          |
 | React 18 and 19                 | Supported                                                          |
 | Next.js App Router, RSC and SSG | Supported                                                          |
+| Node.js, API routes and SSR     | Supported                                                          |
 | Vite zero-config adapter        | Coming soon; the Vanilla and React runtimes already work with Vite |
 | Angular                         | Coming soon                                                        |
 | Symfony                         | Coming soon                                                        |

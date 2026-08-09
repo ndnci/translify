@@ -85,7 +85,8 @@ i18n.t('home.welcome', { name: 'Ada' });
 
 React hooks and a provider are available from `@ndnci/translify/react`;
 request-isolated Server Component and SSG helpers are available from
-`@ndnci/translify/next`.
+`@ndnci/translify/next`. Node.js and API routes can load the project config and
+catalogues directly through `@ndnci/translify/server`.
 
 ### Initialize a config
 
@@ -283,8 +284,8 @@ This repository is a monorepo. The following packages are published:
 | `@ndnci/translify-shared` | Shared types and utilities         |
 
 The main package also exposes `@ndnci/translify/locales` for country and
-language metadata, plus `/vanilla`, `/react`, and `/next` runtime entry points,
-without loading them into the CLI command bundle.
+language metadata, plus `/vanilla`, `/react`, `/next`, and `/server` runtime
+entry points, without loading them into the CLI command bundle.
 
 ---
 
