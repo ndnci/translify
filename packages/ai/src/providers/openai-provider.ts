@@ -35,7 +35,7 @@ export class OpenAIProvider extends BaseTranslationProvider {
     }
 
     this.client = new OpenAI({ apiKey: options.apiKey });
-    this.model = options.model ?? 'gpt-4.1-mini';
+    this.model = options.model ?? 'gpt-5.6-luna';
     this.temperature = options.temperature ?? 0;
   }
 

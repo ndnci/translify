@@ -124,7 +124,7 @@ export default {
     provider: 'openai', // 'openai' or 'openrouter'
     openai_api_key: process.env.OPENAI_API_KEY,
     openrouter_api_key: process.env.OPENROUTER_API_KEY,
-    model: 'gpt-4.1-mini',
+    model: 'gpt-5.6-luna',
     temperature: 0,
     batch_size: 50,
     verify: false,
@@ -133,6 +133,10 @@ export default {
   },
 };
 ```
+
+The example uses the recommended direct OpenAI model. For the lowest-cost
+OpenRouter starting point, switch the provider and use
+`deepseek/deepseek-v4-flash`. See [Choosing an AI model](./models).
 
 ## Environment variables
 

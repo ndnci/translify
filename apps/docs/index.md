@@ -40,8 +40,8 @@ features:
   - icon: 🤖
     title: AI Translation
     details:
-      Auto-translate missing keys via OpenAI or OpenRouter — preserving
-      interpolation variables and your brand voice.
+      Auto-translate via OpenAI or OpenRouter. Start with DeepSeek V4 Flash for
+      low-cost OpenRouter runs or GPT-5.6 Luna with OpenAI.
 
   - icon: ✨
     title: Optimize

@@ -52,7 +52,7 @@ export class OpenRouterProvider extends BaseTranslationProvider {
       httpReferer: options.httpReferer,
       appTitle: options.appTitle ?? 'Translify',
     });
-    this.model = options.model ?? 'openai/gpt-4.1-mini';
+    this.model = options.model ?? 'deepseek/deepseek-v4-flash';
     this.temperature = options.temperature ?? 0;
   }
 

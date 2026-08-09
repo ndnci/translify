@@ -171,7 +171,7 @@ export default {
     provider: 'openai',
     openai_api_key: process.env.OPENAI_API_KEY,
     openrouter_api_key: process.env.OPENROUTER_API_KEY,
-    model: 'gpt-4.1-mini',
+    model: 'gpt-5.6-luna',
     temperature: 0,
     batch_size: 50,
     verify: false,
@@ -249,9 +249,14 @@ translify translate --locale fr
 ```
 
 Requires `ai_translation.enabled = true` in your config and the provider API key
-(`OPENAI_API_KEY` or `OPENROUTER_API_KEY`). OpenRouter can use any model slug
-from its catalogue, for example `anthropic/claude-sonnet-4` or
-`openai/gpt-4.1-mini`.
+(`OPENAI_API_KEY` or `OPENROUTER_API_KEY`). We recommend
+`deepseek/deepseek-v4-flash` through OpenRouter for the lowest-cost default, or
+`gpt-5.6-luna` when calling OpenAI directly. Model prices change, so benchmark
+both against a representative translation catalogue before standardizing.
+
+See the
+[model and real-cost guide](https://ndnci.github.io/translify/guide/models) for
+current links and measured Translify runs.
 
 ---
 

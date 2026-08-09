@@ -15,6 +15,10 @@ pageClass: translator-page
   <BrowserTranslator />
 </ClientOnly>
 
+The playground starts with `deepseek/deepseek-v4-flash`, Translify's recommended
+low-cost OpenRouter model. You can replace the slug with any model available to
+your OpenRouter account.
+
 ## How the serverless version works
 
 GitHub Pages only hosts the static HTML, CSS and JavaScript. The browser sends

@@ -55,7 +55,7 @@ export default {
     provider: 'openai',
     openai_api_key: process.env.OPENAI_API_KEY,
     openrouter_api_key: process.env.OPENROUTER_API_KEY,
-    model: 'gpt-4.1-mini',
+    model: 'gpt-5.6-luna',
     temperature: 0,
     batch_size: 50,
     verify: false,

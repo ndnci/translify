@@ -90,7 +90,7 @@ the checkpoint and start over. The checkpoint is removed after a successful run.
 
 Currently supported:
 
-- [OpenAI](/providers/openai) (GPT-4.1-mini, GPT-4.1, etc.)
+- [OpenAI](/providers/openai) (`gpt-5.6-luna` recommended)
 - [OpenRouter](/providers/openrouter) (any OpenRouter model slug)
 
 When the provider reports usage, the command prints prompt/completion/total
@@ -108,11 +108,11 @@ ai_translation: {
   enabled: true,
   provider: 'openrouter',
   openrouter_api_key: process.env.OPENROUTER_API_KEY,
-  model: 'anthropic/claude-sonnet-4',
+  model: 'deepseek/deepseek-v4-flash',
   temperature: 0,
   batch_size: 50,
   verify: true,
-  verify_model: 'openai/gpt-4.1-mini',
+  verify_model: 'deepseek/deepseek-v4-flash',
   values_only: true,
 }
 ```

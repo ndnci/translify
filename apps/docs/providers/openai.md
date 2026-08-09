@@ -11,7 +11,7 @@ export default {
     enabled: true,
     provider: 'openai',
     openai_api_key: process.env.OPENAI_API_KEY,
-    model: 'gpt-4.1-mini', // fast and affordable
+    model: 'gpt-5.6-luna', // recommended for cost-sensitive workloads
     temperature: 0, // deterministic (best for translations)
     batch_size: 50, // keys per API call
     verify: false,
@@ -28,13 +28,16 @@ export OPENAI_API_KEY=sk-...
 
 ## Models
 
-| Model          | Speed  | Quality | Cost   |
-| -------------- | ------ | ------- | ------ |
-| `gpt-4.1-mini` | Fast   | Good    | Low    |
-| `gpt-4.1`      | Medium | High    | Medium |
-| `gpt-4o`       | Medium | High    | Medium |
+| Model           | Best fit                                      |
+| --------------- | --------------------------------------------- |
+| `gpt-5.6-luna`  | Cost-sensitive, high-volume translation       |
+| `gpt-5.6-terra` | Higher quality while balancing cost           |
+| `gpt-5.6-sol`   | Quality-first translation and difficult cases |
 
-We recommend `gpt-4.1-mini` for most projects.
+We recommend `gpt-5.6-luna` as the direct OpenAI starting point. OpenAI
+describes it as the GPT-5.6 model for cost-sensitive, high-volume workloads.
+Model pricing changes; follow the live OpenAI model page and run a
+representative translation sample before choosing a production default.
 
 ## Interpolation variables
 

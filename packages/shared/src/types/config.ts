@@ -139,10 +139,11 @@ const AITranslationSchema = z
     /**
      * AI model to use.
      *
-     * Recommended: "gpt-4.1-mini" (fast + affordable)
+     * Recommended: "gpt-5.6-luna" with OpenAI, or
+     * "deepseek/deepseek-v4-flash" with OpenRouter.
      * OpenRouter accepts any model slug from https://openrouter.ai/models
      */
-    model: z.string().default('gpt-4.1-mini'),
+    model: z.string().default('gpt-5.6-luna'),
 
     /** Temperature (0 = deterministic, best for translations) */
     temperature: z.number().min(0).max(2).default(0),

@@ -10,7 +10,7 @@ describe('validateConfig', () => {
     const config = validateConfig({});
     expect(config.translations.default_language).toBe('en');
     expect(config.ai_translation.enabled).toBe(false);
-    expect(config.ai_translation.model).toBe('gpt-4.1-mini');
+    expect(config.ai_translation.model).toBe('gpt-5.6-luna');
     expect(Array.isArray(config.source.include)).toBe(true);
   });
 
