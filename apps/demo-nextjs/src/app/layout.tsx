@@ -1,20 +1,19 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
+import { TranslifyProvider } from '@ndnci/translify/react';
+import { i18n } from '../i18n/request';
 
 export const metadata: Metadata = {
   title: 'Translify Demo',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const clientConfig = await i18n.getClientConfig('en');
 
   return (
-    <html lang={locale}>
+    <html lang={clientConfig.locale}>
       <body>
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <TranslifyProvider {...clientConfig}>{children}</TranslifyProvider>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 {
   "home": {
     "title": "Welcome to Translify Demo",
-    "description": "This demo shows Translify working with a Next.js + next-intl project.",
+    "description": "This demo uses Translify directly as its Next.js translation runtime.",
     "cta": "Get Started"
   },
   "nav": {

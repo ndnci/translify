@@ -2,8 +2,8 @@
   <img src="https://raw.githubusercontent.com/ndnci/translify/main/assets/logo.png" alt="Translify logo" width="120" />
 
   <h1>⚡ Translify</h1>
-  <p><strong>Intelligent i18n CLI — extract, sync, detect, translate.</strong></p>
-  <p>Automate your entire internationalization workflow from a single terminal command.</p>
+  <p><strong>Complete i18n toolkit — runtime, studio, extract, sync, detect, translate.</strong></p>
+  <p>Run and automate your entire internationalization workflow with one package.</p>
 
   <a href="https://ndnci.github.io/translify/">
     <img alt="Documentation" src="https://img.shields.io/badge/docs-ndnci.github.io%2Ftranslify-0070f3?style=flat-square" />
@@ -27,8 +27,8 @@
 
 ## What is Translify?
 
-**Translify** is a professional, framework-agnostic CLI that automates the
-hardest parts of i18n:
+**Translify** is a professional i18n runtime and framework-agnostic CLI that
+handles the complete translation lifecycle:
 
 - **Add missing keys** to translation files across languages, preserving
   existing formatting
@@ -40,6 +40,8 @@ hardest parts of i18n:
 - **Edit and translate visually** in a local browser studio
 - **Audit** your entire i18n health in one command
 - **Fix** deterministic audit issues with `--dry-run` previews
+- **Render translations** in Vanilla JavaScript, React, and Next.js with ICU
+  plurals, locale fallback, SSR-safe formatting, and typed catalogue keys
 
 Built for teams that care about DX and translation quality.
 
@@ -64,6 +66,26 @@ npm install -g @ndnci/translify
 # Or run directly without installing
 npx translify@latest init
 ```
+
+### Use translations in the application
+
+```ts
+import { createI18n } from '@ndnci/translify/vanilla';
+import en from './messages/en.json';
+import fr from './messages/fr.json';
+
+const i18n = createI18n({
+  locale: 'fr',
+  defaultLocale: 'en',
+  messages: { en, fr },
+});
+
+i18n.t('home.welcome', { name: 'Ada' });
+```
+
+React hooks and a provider are available from `@ndnci/translify/react`;
+request-isolated Server Component and SSG helpers are available from
+`@ndnci/translify/next`.
 
 ### Initialize a config
 
@@ -206,11 +228,14 @@ export default {
 | Next.js             | ✅ Supported |
 | TypeScript          | ✅ Supported |
 | JavaScript          | ✅ Supported |
+| VanillaJS runtime   | ✅ Supported |
 | i18next             | ✅ Supported |
 | next-intl           | ✅ Supported |
+| Vite adapter        | 🔜 Planned   |
 | Vue                 | 🔜 Planned   |
 | Angular             | 🔜 Planned   |
 | Svelte              | 🔜 Planned   |
+| Symfony             | 🔜 Planned   |
 | Laravel / PHP       | 🔜 Planned   |
 
 ---
@@ -236,14 +261,15 @@ This repository is a monorepo. The following packages are published:
 
 | Package                   | Description                        |
 | ------------------------- | ---------------------------------- |
-| `@ndnci/translify`        | CLI — the main tool                |
+| `@ndnci/translify`        | Runtime, framework adapters & CLI  |
 | `@ndnci/translify-core`   | Core logic (scanner, parser, etc.) |
 | `@ndnci/translify-config` | Config loading and validation      |
 | `@ndnci/translify-ai`     | AI translation providers           |
 | `@ndnci/translify-shared` | Shared types and utilities         |
 
 The main package also exposes `@ndnci/translify/locales` for country and
-language metadata without loading it into the CLI command bundle.
+language metadata, plus `/vanilla`, `/react`, and `/next` runtime entry points,
+without loading them into the CLI command bundle.
 
 ---
 
@@ -254,6 +280,7 @@ language metadata without loading it into the CLI command bundle.
 - [x] Unused / missing / duplicate detection
 - [x] AI translation via OpenAI and OpenRouter
 - [x] Full audit command
+- [x] Vanilla JavaScript, React, and Next.js translation runtimes
 - [ ] Vue SFC parser
 - [ ] Angular template parser
 - [ ] PHP/Laravel support

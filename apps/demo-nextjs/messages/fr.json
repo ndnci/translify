@@ -1,7 +1,7 @@
 {
   "home": {
     "title": "Bienvenue dans la démo Translify",
-    "description": "Cette démo montre Translify fonctionnant avec un projet Next.js + next-intl.",
+    "description": "Cette démo utilise directement Translify comme moteur de traduction Next.js.",
     "cta": "Commencer"
   },
   "nav": {

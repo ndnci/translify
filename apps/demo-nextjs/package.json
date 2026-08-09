@@ -9,13 +9,12 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ndnci/translify": "workspace:*",
     "next": "^15.1.3",
-    "next-intl": "^3.26.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@ndnci/translify": "workspace:*",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.2",

@@ -3,9 +3,10 @@ layout: home
 
 hero:
   name: 'Translify'
-  text: 'Intelligent i18n CLI'
+  text: 'Complete i18n toolkit'
   tagline:
-    Extract, sync, detect, and auto-translate your app — from a single command.
+    Run translations in Vanilla, React, or Next.js — then extract, sync, audit,
+    and translate them from one CLI.
   image:
     src: /logo.png
     alt: Translify
@@ -53,4 +54,10 @@ features:
     details:
       Run a full i18n health audit with a single command — perfect for CI
       pipelines.
+
+  - icon: ⚛️
+    title: Application Runtime
+    details:
+      Render ICU translations in Vanilla JavaScript, React, Next.js Server
+      Components, Client Components, and static pages.
 ---

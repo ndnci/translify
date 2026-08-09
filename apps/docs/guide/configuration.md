@@ -180,3 +180,10 @@ Example error:
     is "openai" and ai_translation is enabled.
     Set it via process.env.OPENAI_API_KEY or directly in your config.
 ```
+
+## Runtime reuse
+
+The Next.js runtime reads `translations.default_language` from this same config
+through `createNextI18n`. The browser-safe `createI18nFromConfig` helper can do
+the same in Vanilla JavaScript when the config does not evaluate server-only
+environment variables. See the [Application Runtime](./runtime) guide.

@@ -52,4 +52,40 @@ export default defineConfig([
     sourcemap: false,
     clean: false,
   },
+  // Framework-agnostic runtime: `@ndnci/translify/vanilla` and `/runtime`
+  {
+    entry: { 'runtime-entry': 'src/runtime-entry.ts' },
+    format: ['cjs', 'esm'],
+    target: 'es2022',
+    platform: 'neutral',
+    dts: { resolve: ['@ndnci/translify-runtime'] },
+    sourcemap: false,
+    clean: false,
+    noExternal: ['@ndnci/translify-runtime'],
+  },
+  // React hooks/provider: `@ndnci/translify/react`
+  {
+    entry: { 'react-entry': 'src/react-entry.ts' },
+    format: ['cjs', 'esm'],
+    target: 'es2022',
+    platform: 'neutral',
+    dts: { resolve: ['@ndnci/translify-runtime'] },
+    sourcemap: false,
+    clean: false,
+    treeshake: false,
+    external: ['react', 'react/jsx-runtime'],
+    noExternal: ['@ndnci/translify-runtime'],
+    banner: { js: "'use client';" },
+  },
+  // Request-isolated server/RSC helpers: `@ndnci/translify/next`
+  {
+    entry: { 'next-entry': 'src/next-entry.ts' },
+    format: ['cjs', 'esm'],
+    target: 'es2022',
+    platform: 'neutral',
+    dts: { resolve: ['@ndnci/translify-runtime'] },
+    sourcemap: false,
+    clean: false,
+    noExternal: ['@ndnci/translify-runtime'],
+  },
 ]);

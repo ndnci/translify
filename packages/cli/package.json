@@ -1,7 +1,7 @@
 {
   "name": "@ndnci/translify",
   "version": "0.6.1",
-  "description": "Intelligent i18n CLI — extract, sync, detect, and translate your app",
+  "description": "Complete i18n runtime and CLI for Vanilla JavaScript, React, and Next.js",
   "keywords": [
     "i18n",
     "cli",
@@ -39,8 +39,31 @@
       "types": "./dist/locales-entry.d.ts",
       "import": "./dist/locales-entry.js",
       "require": "./dist/locales-entry.cjs"
+    },
+    "./vanilla": {
+      "types": "./dist/runtime-entry.d.ts",
+      "import": "./dist/runtime-entry.js",
+      "require": "./dist/runtime-entry.cjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime-entry.d.ts",
+      "import": "./dist/runtime-entry.js",
+      "require": "./dist/runtime-entry.cjs"
+    },
+    "./react": {
+      "types": "./dist/react-entry.d.ts",
+      "import": "./dist/react-entry.js",
+      "require": "./dist/react-entry.cjs"
+    },
+    "./next": {
+      "types": "./dist/next-entry.d.ts",
+      "import": "./dist/next-entry.js",
+      "require": "./dist/next-entry.cjs"
     }
   },
+  "sideEffects": [
+    "./dist/index.js"
+  ],
   "files": [
     "dist"
   ],
@@ -63,6 +86,7 @@
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "fast-glob": "^3.3.2",
+    "intl-messageformat": "^10.7.18",
     "jiti": "^1.21.6",
     "jsonc-parser": "^3.3.1",
     "openai": "^6.45.0",
@@ -73,12 +97,23 @@
     "@ndnci/translify-ai": "workspace:*",
     "@ndnci/translify-config": "workspace:*",
     "@ndnci/translify-core": "workspace:*",
+    "@ndnci/translify-runtime": "workspace:*",
     "@ndnci/translify-shared": "workspace:*",
     "@types/node": "^22.10.0",
+    "@types/react": "^19.0.3",
+    "react": "^19.0.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22.0.0"
