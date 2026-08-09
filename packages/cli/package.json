@@ -1,6 +1,6 @@
 {
   "name": "@ndnci/translify",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Complete client and server i18n runtime, framework adapters, studio, and CLI",
   "keywords": [
     "i18n",
