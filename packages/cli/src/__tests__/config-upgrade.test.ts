@@ -36,6 +36,7 @@ describe('config-upgrade', () => {
     expect(result.content).toContain('source: {');
     expect(result.content).toContain('detection: {');
     expect(result.content).toContain('routing: {');
+    expect(result.content).toContain('runtime: {');
     expect(result.content).toContain("locale_prefix: 'as-needed'");
     expect(result.content).toContain('ai_translation: {');
     expect(result.content).toContain("default_language: 'fr'");
@@ -60,6 +61,7 @@ describe('config-upgrade', () => {
     const parsed = JSON.parse(result.content) as {
       ai_translation: Record<string, unknown>;
       routing: Record<string, unknown>;
+      runtime: Record<string, unknown>;
     };
 
     expect(parsed.ai_translation.provider).toBe('openrouter');
@@ -68,5 +70,6 @@ describe('config-upgrade', () => {
     expect(parsed.ai_translation.verify).toBe(false);
     expect(parsed.ai_translation.values_only).toBe(false);
     expect(parsed.routing.locale_detection).toBe(true);
+    expect(parsed.runtime.locale).toBe('auto');
   });
 });

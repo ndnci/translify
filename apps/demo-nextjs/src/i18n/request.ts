@@ -8,7 +8,6 @@ const loaders = {
 
 export const i18n = createNextI18n({
   config,
-  locales: ['en', 'fr'] as const,
   loadMessages: async (locale) => loaders[locale](),
   timeZone: 'UTC',
 });

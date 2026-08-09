@@ -31,4 +31,4 @@ export default {
     model: 'gpt-5.6-luna',
     temperature: 0,
   },
-};
+} as const;

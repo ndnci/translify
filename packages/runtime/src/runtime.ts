@@ -1,5 +1,10 @@
 import { IntlMessageFormat } from 'intl-messageformat';
-import { canonicalizeLocale, localeCandidates, matchSupportedLocale } from './locale.js';
+import {
+  canonicalizeLocale,
+  detectLocale,
+  localeCandidates,
+  matchSupportedLocale,
+} from './locale.js';
 import {
   TranslifyRuntimeError,
   type CatalogMessages,
@@ -24,9 +29,10 @@ interface ResolvedMessage {
 }
 
 export function createI18n<const Catalogs extends MessageCatalog>(
-  options: CreateI18nOptions<Catalogs>,
+  input: CreateI18nOptions<Catalogs> | (TranslifyConfigLike & { runtime: { messages: Catalogs } }),
 ): I18n<CatalogMessages<Catalogs>> {
-  return new RuntimeI18n(options);
+  const options: CreateI18nOptions<Catalogs> = 'translations' in input ? { config: input } : input;
+  return new RuntimeI18n(resolveRuntimeOptions(options));
 }
 
 export function createI18nFromConfig<const Catalogs extends MessageCatalog>(
@@ -35,8 +41,53 @@ export function createI18nFromConfig<const Catalogs extends MessageCatalog>(
 ): I18n<CatalogMessages<Catalogs>> {
   return createI18n({
     ...options,
-    defaultLocale: config.translations.default_language,
+    config,
   });
+}
+
+type ResolvedCreateI18nOptions<Catalogs extends MessageCatalog> = Omit<
+  CreateI18nOptions<Catalogs>,
+  'config' | 'useConfig' | 'locale' | 'defaultLocale' | 'messages'
+> & {
+  locale: string;
+  defaultLocale: string;
+  messages: Catalogs;
+};
+
+function resolveRuntimeOptions<Catalogs extends MessageCatalog>(
+  options: CreateI18nOptions<Catalogs>,
+): ResolvedCreateI18nOptions<Catalogs> {
+  const config =
+    options.useConfig === false || options.config === false ? undefined : options.config;
+  const messages = options.messages ?? (config?.runtime?.messages as Catalogs | undefined);
+  if (!messages || Object.keys(messages).length === 0) {
+    throw new Error(
+      'No runtime messages were provided. Add runtime.messages to translify.config or pass messages to createI18n().',
+    );
+  }
+
+  const availableLocales = Object.keys(messages);
+  const defaultLocale =
+    options.defaultLocale ?? config?.translations.default_language ?? availableLocales[0];
+  if (!defaultLocale) throw new Error('At least one runtime locale is required.');
+
+  const configuredLocale = config?.runtime?.locale;
+  const locale =
+    options.locale ??
+    (configuredLocale && configuredLocale !== 'auto'
+      ? configuredLocale
+      : detectLocale(availableLocales, defaultLocale));
+
+  const missingMessage = options.missingMessage ?? config?.runtime?.missing_message;
+  const timeZone = options.timeZone ?? config?.runtime?.time_zone;
+  return {
+    locale,
+    defaultLocale,
+    messages,
+    ...(missingMessage && { missingMessage }),
+    ...(timeZone && { timeZone }),
+    ...(options.onError && { onError: options.onError }),
+  };
 }
 
 class RuntimeI18n<const Catalogs extends MessageCatalog> implements I18n<
@@ -58,7 +109,7 @@ class RuntimeI18n<const Catalogs extends MessageCatalog> implements I18n<
   private readonly relativeTimeFormats = new Map<string, Intl.RelativeTimeFormat>();
   private version = 0;
 
-  constructor(options: CreateI18nOptions<Catalogs>) {
+  constructor(options: ResolvedCreateI18nOptions<Catalogs>) {
     this.catalogs = { ...options.messages };
     this.defaultLocale = this.requireAvailableLocale(options.defaultLocale, 'default locale');
     this.currentLocale = this.requireAvailableLocale(options.locale, 'locale');

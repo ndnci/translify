@@ -14,8 +14,14 @@ import type {
 export function createNextI18n<const Locale extends string>(
   options: CreateNextI18nOptions<Locale>,
 ): NextI18n<Locale> {
+  const locales = (options.locales ?? options.config.routing?.locales) as
+    | readonly Locale[]
+    | undefined;
+  if (!locales || locales.length === 0) {
+    throw new Error('Add routing.locales to translify.config or pass locales to createNextI18n.');
+  }
   const matchedDefaultLocale = matchSupportedLocale(
-    options.locales,
+    locales,
     options.config.translations.default_language,
   );
   if (!matchedDefaultLocale) {
@@ -26,7 +32,7 @@ export function createNextI18n<const Locale extends string>(
   const defaultLocale = matchedDefaultLocale as Locale;
 
   const resolveLocale = (locale?: string): Locale => {
-    const matched = locale ? matchSupportedLocale(options.locales, locale) : undefined;
+    const matched = locale ? matchSupportedLocale(locales, locale) : undefined;
     return (matched as Locale | undefined) ?? defaultLocale;
   };
 
@@ -72,13 +78,13 @@ export function createNextI18n<const Locale extends string>(
 
   return {
     defaultLocale,
-    locales: options.locales,
+    locales,
     resolveLocale,
     isLocale: (locale: string): locale is Locale => {
       const canonical = canonicalizeLocale(locale);
       return (
         canonical !== undefined &&
-        options.locales.some((supported) => canonicalizeLocale(supported) === canonical)
+        locales.some((supported) => canonicalizeLocale(supported) === canonical)
       );
     },
     getI18n,
@@ -88,7 +94,7 @@ export function createNextI18n<const Locale extends string>(
       ...(await loadCatalogs(locale)),
       ...(options.timeZone && { timeZone: options.timeZone }),
     }),
-    generateStaticParams: () => options.locales.map((locale) => ({ locale })),
+    generateStaticParams: () => locales.map((locale) => ({ locale })),
   };
 }
 

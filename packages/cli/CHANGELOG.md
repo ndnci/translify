@@ -21,6 +21,8 @@
     and JSON catalogues for request-isolated server translation.
   - Add reactive Vue/Nuxt, Svelte/SvelteKit, Angular, and Solid/SolidStart
     adapters with optional framework peer dependencies.
+  - Centralize application runtime defaults and optional bundled messages in
+    `translify.config`, with per-key overrides and an explicit opt-out.
 
 ### Patch Changes
 

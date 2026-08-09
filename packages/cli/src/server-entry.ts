@@ -44,8 +44,8 @@ export async function createServerI18n(
   const locale = resolveRequestLocale(config, catalogs, options);
 
   return createI18n({
+    config,
     locale,
-    defaultLocale: config.translations.default_language,
     messages: catalogs,
     ...(options.timeZone && { timeZone: options.timeZone }),
     ...(options.missingMessage && { missingMessage: options.missingMessage }),

@@ -40,8 +40,9 @@ handles the complete translation lifecycle:
 - **Edit and translate visually** in a local browser studio
 - **Audit** your entire i18n health in one command
 - **Fix** deterministic audit issues with `--dry-run` previews
-- **Render translations** in Vanilla JavaScript, React, and Next.js with ICU
-  plurals, locale fallback, SSR-safe formatting, and typed catalogue keys
+- **Render translations** across Vanilla JavaScript, React, Next.js, Vue,
+  Svelte, Angular, Solid, and server runtimes with ICU plurals, locale fallback,
+  SSR-safe formatting, and typed catalogue keys
 
 Built for teams that care about DX and translation quality.
 
@@ -71,14 +72,9 @@ npx translify@latest init
 
 ```ts
 import { createI18n } from '@ndnci/translify/vanilla';
-import en from './messages/en.json';
-import fr from './messages/fr.json';
+import config from '../translify.config';
 
-const i18n = createI18n({
-  locale: 'fr',
-  defaultLocale: 'en',
-  messages: { en, fr },
-});
+const i18n = createI18n(config);
 
 i18n.t('home.welcome', { name: 'Ada' });
 ```
@@ -141,6 +137,9 @@ one language as a single catalogue.
 Create a `translify.config.ts` at your project root:
 
 ```typescript
+import en from './messages/en.json';
+import fr from './messages/fr.json';
+
 // Optional editor autocomplete:
 // /** @type {import('@ndnci/translify/config').TranslifyConfig} */
 export default {
@@ -167,6 +166,13 @@ export default {
     pathnames: {
       '/about': { en: '/about', fr: '/a-propos' },
     },
+  },
+
+  runtime: {
+    locale: 'auto',
+    messages: { en, fr },
+    missing_message: 'key',
+    time_zone: 'Europe/Paris',
   },
 
   extraction: {

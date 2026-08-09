@@ -108,6 +108,17 @@ export default {
     trailing_slash: 'preserve',
   },
 
+  // ── Application runtime ────────────────────────────────────────────────
+  runtime: {
+    // Detect from the browser/request, or use a fixed initial locale.
+    locale: 'auto',
+    missing_message: 'key', // 'key', 'empty', or 'throw'
+    time_zone: 'Europe/Paris',
+
+    // Browser-safe configs can import JSON catalogues and centralize them:
+    // messages: { en, fr },
+  },
+
   // ── Extraction ──────────────────────────────────────────────────────────
   extraction: {
     // Function names/expressions to treat as translation calls
@@ -217,8 +228,10 @@ Example error:
 
 ## Runtime reuse
 
-The application runtimes reuse `translations.default_language` and `routing`
-from this same file. Per-instance values are only overrides, so the project
-config remains the recommended source of truth. Do not import a config that
-reads private environment variables into a client bundle. See the
+The application runtimes reuse `translations.default_language`, `routing`, and
+`runtime` from this same file. `createI18n(config)` is the shortest browser-safe
+setup; per-instance values override only matching config keys. Set
+`useConfig: false` for an intentionally standalone runtime. The Node/server
+entry discovers this file automatically. Do not import a config that reads
+private environment variables into a client bundle. See the
 [Application Runtime](./runtime) guide.

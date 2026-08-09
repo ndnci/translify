@@ -2,7 +2,8 @@
 
 Translify can be the translation runtime used by your application as well as the
 CLI that maintains its catalogues. The same package supports Vanilla JavaScript,
-React, and Next.js without loading CLI code into the browser.
+React, Next.js, Vue, Svelte, Angular, and Solid without loading CLI code into
+the browser.
 
 ```bash
 npm install @ndnci/translify
@@ -18,20 +19,31 @@ imports in TypeScript.
 Vanilla is the framework-independent foundation; it does not require React or a
 server.
 
+Put browser catalogues and runtime defaults in the existing config:
+
 ```ts
-import { createI18n, detectLocale } from '@ndnci/translify/vanilla';
+// translify.config.ts
 import en from './messages/en.json';
 import fr from './messages/fr.json';
 
-const messages = { en, fr };
-const locale = detectLocale(Object.keys(messages), 'en');
+export default {
+  translations: { default_language: 'en', files: ['messages/**/*.json'] },
+  routing: { locales: ['en', 'fr'] },
+  runtime: {
+    locale: 'auto',
+    messages: { en, fr },
+    time_zone: 'Europe/Paris',
+  },
+} as const;
+```
 
-export const i18n = createI18n({
-  locale,
-  defaultLocale: 'en',
-  messages,
-  timeZone: 'Europe/Paris',
-});
+Application setup is then two imports and one call:
+
+```ts
+import { createI18n } from '@ndnci/translify/vanilla';
+import config from '../translify.config';
+
+export const i18n = createI18n(config);
 
 document.querySelector('#title').textContent = i18n.t('home.title', {
   name: 'Ada',
@@ -49,10 +61,19 @@ Use `textContent`, not `innerHTML`, for ordinary translated strings. Translify
 preserves literal tags as text and does not treat catalogue content as trusted
 HTML.
 
-If your `translify.config` is browser-safe,
-`createI18nFromConfig(config, options)` reads `translations.default_language`
-directly so it is not repeated. Do not import a config containing server-only
-environment variables into a client bundle.
+Central config is the default. Local values override only the matching keys:
+
+```ts
+createI18n({ config, locale: 'fr' }); // Everything else still comes from config.
+```
+
+Set `useConfig: false` to create an intentionally standalone instance; in that
+case pass `messages`, `defaultLocale`, and optionally `locale` locally.
+`createI18nFromConfig` remains as a compatibility alias. A browser bundle must
+import its config explicitly because it cannot safely discover project files at
+runtime. Never import server API keys into a client bundle; keep a separate
+browser-safe config or pass only `messages` when the main config contains
+secrets.
 
 ## Localized URLs
 
@@ -267,7 +288,6 @@ const loaders = {
 
 export const i18n = createNextI18n({
   config,
-  locales: ['en', 'fr'] as const,
   loadMessages: (locale) => loaders[locale](),
   timeZone: 'UTC',
 });

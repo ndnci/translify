@@ -102,6 +102,47 @@ describe('createI18n', () => {
 });
 
 describe('configuration helpers', () => {
+  it('creates a runtime directly from centralized config messages', () => {
+    const i18n = createI18n({
+      translations: { default_language: 'en' },
+      runtime: { locale: 'en', messages },
+    });
+
+    expect(i18n.locale).toBe('en');
+    expect(i18n.defaultLocale).toBe('en');
+    expect(i18n.t('Home.title', { name: 'Ada' })).toBe('Hello Ada');
+  });
+
+  it('overrides only explicitly provided centralized config keys', () => {
+    const i18n = createI18n({
+      config: {
+        translations: { default_language: 'en' },
+        runtime: { locale: 'en', messages, missing_message: 'throw', time_zone: 'UTC' },
+      },
+      locale: 'fr',
+      missingMessage: 'key',
+    });
+
+    expect(i18n.locale).toBe('fr');
+    expect(i18n.t('Home.unknown' as never)).toBe('Home.unknown');
+  });
+
+  it('can explicitly ignore config runtime values', () => {
+    const i18n = createI18n({
+      config: {
+        translations: { default_language: 'de' },
+        runtime: { locale: 'de', messages: { de: { hello: 'Hallo' } } },
+      },
+      useConfig: false,
+      locale: 'fr',
+      defaultLocale: 'en',
+      messages,
+    });
+
+    expect(i18n.defaultLocale).toBe('en');
+    expect(i18n.locale).toBe('fr');
+  });
+
   it('reuses the default language from translify.config', () => {
     const i18n = createI18nFromConfig(
       { translations: { default_language: 'en' } },

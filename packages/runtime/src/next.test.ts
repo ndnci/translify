@@ -48,4 +48,17 @@ describe('createNextI18n', () => {
     french.setLocale('en');
     expect(english.locale).toBe('en');
   });
+
+  it('uses routing locales from config without repeating them', async () => {
+    const nextI18n = createNextI18n({
+      config: {
+        translations: { default_language: 'en' },
+        routing: { locales: ['en', 'fr'] as const },
+      },
+      loadMessages: async (locale: 'en' | 'fr') => ({ value: locale }),
+    });
+
+    expect(nextI18n.locales).toEqual(['en', 'fr']);
+    expect((await nextI18n.getTranslations({ locale: 'fr' }))('value')).toBe('fr');
+  });
 });

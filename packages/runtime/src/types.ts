@@ -88,20 +88,29 @@ export interface I18n<Messages extends MessageTree = MessageTree> {
   ): string;
 }
 
-export interface CreateI18nOptions<Catalogs extends MessageCatalog> {
-  locale: string;
-  defaultLocale: string;
-  messages: Catalogs;
+export interface CreateI18nOptions<Catalogs extends MessageCatalog = MessageCatalog> {
+  /** Central config is used by default; set false to use only local options. */
+  config?: TranslifyConfigLike | false;
+  useConfig?: boolean;
+  locale?: string;
+  defaultLocale?: string;
+  messages?: Catalogs;
   missingMessage?: MissingMessageBehavior;
   timeZone?: string;
   onError?: (error: TranslifyRuntimeError) => void;
 }
 
-export interface TranslifyConfigLike {
+export interface TranslifyConfigLike<Locale extends string = string> {
   translations: {
     default_language: string;
   };
-  routing?: RoutingConfig;
+  routing?: RoutingConfig<Locale>;
+  runtime?: {
+    locale?: string;
+    messages?: MessageCatalog | undefined;
+    missing_message?: MissingMessageBehavior;
+    time_zone?: string | undefined;
+  };
 }
 
 export type LocalePrefix = 'always' | 'as-needed' | 'never';
@@ -115,8 +124,8 @@ export interface LocaleCookieConfig {
   secure?: boolean;
 }
 
-export interface RoutingConfig {
-  locales: readonly string[];
+export interface RoutingConfig<Locale extends string = string> {
+  locales: readonly Locale[];
   locale_prefix?: LocalePrefix;
   locale_detection?: boolean;
   locale_cookie?: false | LocaleCookieConfig;
@@ -160,19 +169,23 @@ export type I18nProviderConfig =
       messages?: never;
       missingMessage?: never;
       timeZone?: never;
+      config?: never;
+      useConfig?: never;
     }
   | {
       i18n?: never;
-      locale: string;
-      defaultLocale: string;
-      messages: MessageCatalog;
+      locale?: string;
+      defaultLocale?: string;
+      messages?: MessageCatalog;
+      config?: TranslifyConfigLike | false;
+      useConfig?: boolean;
       missingMessage?: MissingMessageBehavior;
       timeZone?: string;
     };
 
 export interface CreateNextI18nOptions<Locale extends string> {
-  config: TranslifyConfigLike;
-  locales: readonly Locale[];
+  config: TranslifyConfigLike<Locale>;
+  locales?: readonly Locale[];
   loadMessages: (locale: Locale) => MessageTree | Promise<MessageTree>;
   timeZone?: string;
 }

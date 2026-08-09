@@ -51,6 +51,14 @@ export default {
     trailing_slash: 'preserve',
   },
 
+  runtime: {
+    locale: 'auto',
+    missing_message: 'key',
+    time_zone: undefined,
+    // Browser applications may import their JSON files above and centralize
+    // them here: messages: { en, fr },
+  },
+
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
     // Also recognizes your own custom wrapper hooks around useTranslations/

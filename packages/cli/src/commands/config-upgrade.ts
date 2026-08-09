@@ -46,6 +46,10 @@ const JSON_DEFAULTS = {
     base_path: '',
     trailing_slash: 'preserve',
   },
+  runtime: {
+    locale: 'auto',
+    missing_message: 'key',
+  },
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
     namespace_functions: ['useTranslations', 'getTranslations'],
@@ -103,6 +107,11 @@ const TOP_LEVEL_SNIPPETS = {
   pathnames: {},
   base_path: '',
   trailing_slash: 'preserve',
+}`,
+  runtime: `runtime: {
+  locale: 'auto',
+  missing_message: 'key',
+  time_zone: undefined,
 }`,
   extraction: `extraction: {
   translation_functions: ['t', 'i18n.t', 'translate'],
@@ -183,6 +192,9 @@ const NESTED_SNIPPETS: Array<{ path: string[]; key: string; snippet: string }> =
   { path: ['routing'], key: 'pathnames', snippet: 'pathnames: {}' },
   { path: ['routing'], key: 'base_path', snippet: "base_path: ''" },
   { path: ['routing'], key: 'trailing_slash', snippet: "trailing_slash: 'preserve'" },
+  { path: ['runtime'], key: 'locale', snippet: "locale: 'auto'" },
+  { path: ['runtime'], key: 'missing_message', snippet: "missing_message: 'key'" },
+  { path: ['runtime'], key: 'time_zone', snippet: 'time_zone: undefined' },
   {
     path: ['extraction'],
     key: 'translation_functions',

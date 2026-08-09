@@ -127,6 +127,22 @@ describe('validateConfig', () => {
     expect(config.routing.pathnames['/about']).toEqual({ en: '/about', fr: '/a-propos' });
   });
 
+  it('accepts centralized browser runtime defaults and bundled messages', () => {
+    const config = validateConfig({
+      translations: { default_language: 'en' },
+      runtime: {
+        locale: 'auto',
+        missing_message: 'throw',
+        time_zone: 'UTC',
+        messages: { en: { home: { title: 'Hello' } }, fr: { home: { title: 'Bonjour' } } },
+      },
+    });
+
+    expect(config.runtime.locale).toBe('auto');
+    expect(config.runtime.missing_message).toBe('throw');
+    expect(config.runtime.messages?.fr).toEqual({ home: { title: 'Bonjour' } });
+  });
+
   it('loads .env files before evaluating config process.env references', async () => {
     const cwd = mkdtempSync(join(tmpdir(), 'translify-env-'));
     const envKey = 'TRANSLIFY_TEST_OPENAI_API_KEY';

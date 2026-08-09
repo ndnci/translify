@@ -15,19 +15,23 @@ export function TranslifyProvider(props: TranslifyProviderProps) {
   const i18n = useMemo(() => {
     if (props.i18n) return props.i18n;
     return createI18n({
-      locale: props.locale,
-      defaultLocale: props.defaultLocale,
-      messages: props.messages,
+      ...(props.config !== undefined && { config: props.config }),
+      ...(props.useConfig !== undefined && { useConfig: props.useConfig }),
+      ...(props.locale && { locale: props.locale }),
+      ...(props.defaultLocale && { defaultLocale: props.defaultLocale }),
+      ...(props.messages && { messages: props.messages }),
       ...(props.missingMessage && { missingMessage: props.missingMessage }),
       ...(props.timeZone && { timeZone: props.timeZone }),
     });
   }, [
     props.defaultLocale,
+    props.config,
     props.i18n,
     props.locale,
     props.messages,
     props.missingMessage,
     props.timeZone,
+    props.useConfig,
   ]);
 
   return createElement(TranslifyContext.Provider, { value: i18n }, props.children);

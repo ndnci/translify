@@ -97,6 +97,20 @@ const RoutingSchema = z
   })
   .strict();
 
+// ─── Application runtime ─────────────────────────────────────────────────────
+
+const RuntimeSchema = z
+  .object({
+    /** Initial locale or automatic browser/request detection. */
+    locale: z.string().default('auto'),
+    /** Optional catalogues bundled by a browser application. */
+    messages: z.record(z.record(z.unknown())).optional(),
+    missing_message: z.enum(['key', 'empty', 'throw']).default('key'),
+    /** Fixed IANA time zone used to keep SSR and hydration output identical. */
+    time_zone: z.string().optional(),
+  })
+  .strict();
+
 // ─── Extraction ────────────────────────────────────────────────────────────────
 
 const ExtractionSchema = z
@@ -223,6 +237,7 @@ export const TranslifyConfigSchema = z
     source: SourceSchema.default({}),
     translations: TranslationsSchema.default({}),
     routing: RoutingSchema.default({}),
+    runtime: RuntimeSchema.default({}),
     extraction: ExtractionSchema.default({}),
     detection: DetectionSchema.default({}),
     ai_translation: AITranslationSchema.default({}),
