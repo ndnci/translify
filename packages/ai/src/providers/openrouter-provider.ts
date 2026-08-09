@@ -7,6 +7,10 @@ import {
   type TranslationUsage,
   mergeTranslationUsage,
 } from './base-provider.js';
+import {
+  buildBatchTranslationPrompt,
+  buildTranslationSystemPrompt,
+} from '../translation-prompts.js';
 
 export interface OpenRouterProviderOptions {
   apiKey: string;
@@ -110,14 +114,11 @@ export class OpenRouterProvider extends BaseTranslationProvider {
         messages: [
           {
             role: 'system',
-            content:
-              'You are a professional software localization expert. ' +
-              'Translate i18n strings accurately and naturally. ' +
-              'Preserve all interpolation variables exactly as-is (e.g. {name}, {{count}}, %s). ' +
-              (request.valuesOnly
+            content: buildTranslationSystemPrompt(
+              request.valuesOnly
                 ? 'Return ONLY a valid JSON object with an "items" array containing translated values in the same order. '
-                : 'Return ONLY a valid JSON object with the same keys and translated values. ') +
-              'Do not add explanations or comments.',
+                : 'Return ONLY a valid JSON object with the same keys and translated values.',
+            ),
           },
           { role: 'user', content: this.buildPrompt(request) },
         ],
@@ -170,24 +171,7 @@ export class OpenRouterProvider extends BaseTranslationProvider {
   }
 
   private buildPrompt(request: TranslationRequest): string {
-    const instructions = request.instructions?.trim()
-      ? `Additional instructions: ${request.instructions.trim()}\n`
-      : '';
-    if (request.valuesOnly) {
-      return (
-        `Translate each value in this JSON array from "${request.sourceLanguage}" to "${request.targetLanguage}".\n` +
-        instructions +
-        'Return ONLY a JSON object shaped as {"items":[...]} with the same length and order.\n\n' +
-        JSON.stringify(Object.values(request.entries), null, 2)
-      );
-    }
-
-    return (
-      `Translate the following JSON from "${request.sourceLanguage}" to "${request.targetLanguage}".\n` +
-      instructions +
-      '\n' +
-      JSON.stringify(request.entries, null, 2)
-    );
+    return buildBatchTranslationPrompt(request);
   }
 
   private parseKeyedResponse(

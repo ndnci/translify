@@ -24,6 +24,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/installation' },
       { text: 'Commands', link: '/commands/audit' },
+      { text: 'Translator', link: '/translator' },
       { text: 'Config', link: '/guide/configuration' },
       {
         text: `v${cliVersion}`,
