@@ -4,6 +4,8 @@ import type {
   CountryWithLanguages,
   DateStyle,
   LanguageInfo,
+  LanguageOption,
+  GetLanguageOptionsOptions,
   LocaleData,
 } from './types.js';
 
@@ -66,6 +68,42 @@ export function getCountriesForLanguage(code: string): CountryInfo[] {
   });
 }
 
+/** Builds deduplicated selector options from the complete bundled language registry. */
+export function getLanguageOptions(options: GetLanguageOptionsOptions = {}): LanguageOption[] {
+  const byCode = new Map<string, LanguageOption>();
+  for (const language of LANGUAGES) {
+    const code = language.iso6391 ?? language.bcp47 ?? language.iso6393;
+    if (byCode.has(code)) continue;
+    const nativeLabel = capitalizeDisplay(language.nativeName || language.name);
+    const nameLabel =
+      nativeLabel.localeCompare(language.name, undefined, { sensitivity: 'base' }) === 0
+        ? nativeLabel
+        : `${nativeLabel} — ${language.name}`;
+    byCode.set(code, {
+      code,
+      name: language.name,
+      nativeName: language.nativeName,
+      label: `${nameLabel} (${code})`,
+      direction: language.direction,
+      type: language.type,
+    });
+  }
+
+  const preferred = (options.preferred ?? []).flatMap((code) => {
+    const language = getLanguage(code);
+    if (!language) return [];
+    const key = language.iso6391 ?? language.bcp47 ?? language.iso6393;
+    const option = byCode.get(key);
+    if (!option) return [];
+    byCode.delete(key);
+    return [option];
+  });
+  return [
+    ...preferred,
+    ...[...byCode.values()].sort((left, right) => left.label.localeCompare(right.label)),
+  ];
+}
+
 export function formatDateForCountry(
   date: Date | number | string,
   countryCode: string,
@@ -84,4 +122,9 @@ export function formatDateForCountry(
 
 function normalize(code: string): string {
   return code.trim().replace(/_/g, '-').toLowerCase();
+}
+
+function capitalizeDisplay(value: string): string {
+  const [first = '', ...rest] = [...value];
+  return `${first.toLocaleUpperCase()}${rest.join('')}`;
 }

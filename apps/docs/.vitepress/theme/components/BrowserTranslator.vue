@@ -5,33 +5,35 @@ import {
   translateTextWithOpenRouter,
   type BrowserTranslationUsage,
 } from '@ndnci/translify-ai/browser';
+import { getLanguageOptions } from '@ndnci/translify/locales';
 
 const DATABASE_NAME = 'translify-playground';
 const STORE_NAME = 'secrets';
 const API_KEY_ID = 'openrouter-api-key';
 
-const commonLanguages = [
-  ['auto', 'Detect automatically'],
-  ['ar', 'Arabic'],
-  ['az', 'Azerbaijani'],
-  ['zh-CN', 'Chinese (Simplified)'],
-  ['zh-TW', 'Chinese (Traditional)'],
-  ['nl', 'Dutch'],
-  ['en', 'English'],
-  ['fr', 'French'],
-  ['de', 'German'],
-  ['hi', 'Hindi'],
-  ['it', 'Italian'],
-  ['ja', 'Japanese'],
-  ['ko', 'Korean'],
-  ['pl', 'Polish'],
-  ['pt', 'Portuguese'],
-  ['ru', 'Russian'],
-  ['es', 'Spanish'],
-  ['sv', 'Swedish'],
-  ['tr', 'Turkish'],
-  ['uk', 'Ukrainian'],
-] as const;
+const languageOptions = getLanguageOptions({
+  preferred: [
+    'fr',
+    'en',
+    'es',
+    'de',
+    'it',
+    'pt',
+    'ar',
+    'az',
+    'zh',
+    'hi',
+    'ja',
+    'ko',
+    'nl',
+    'pl',
+    'ru',
+    'sv',
+    'tr',
+    'uk',
+  ],
+});
+const languageByCode = new Map(languageOptions.map((language) => [language.code, language]));
 
 const apiKey = ref('');
 const rememberKey = ref(false);
@@ -84,8 +86,8 @@ async function translate(): Promise<void> {
     const result = await translateTextWithOpenRouter({
       apiKey: apiKey.value,
       model: model.value,
-      sourceLanguage: sourceLanguage.value,
-      targetLanguage: targetLanguage.value,
+      sourceLanguage: languagePrompt(sourceLanguage.value),
+      targetLanguage: languagePrompt(targetLanguage.value),
       text: sourceText.value,
       httpReferer: window.location.href,
       appTitle: 'Translify browser translator',
@@ -156,9 +158,10 @@ function formatCost(cost: number | undefined): string {
   })}`;
 }
 
-function languageLabel(code: string): string {
-  const known = commonLanguages.find(([value]) => value === code);
-  return known ? `${known[1]} (${known[0]})` : code;
+function languagePrompt(code: string): string {
+  if (code === 'auto') return 'Detect automatically';
+  const language = languageByCode.get(code);
+  return language ? `${language.name} (${language.code})` : code;
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -288,14 +291,19 @@ async function deleteStoredKey(): Promise<void> {
     </div>
 
     <div class="translator-card">
-      <div class="language-bar">
-        <label>
+      <div class="locale-bar">
+        <label class="locale-field">
           <span class="sr-only">Source language</span>
-          <input
-            v-model="sourceLanguage"
-            list="translify-source-languages"
-            aria-label="Source language"
-          />
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
+          </svg>
+          <select v-model="sourceLanguage" aria-label="Source language">
+            <option value="auto">Detect automatically</option>
+            <option v-for="language in languageOptions" :key="language.code" :value="language.code">
+              {{ language.label }}
+            </option>
+          </select>
         </label>
         <button
           type="button"
@@ -307,28 +315,18 @@ async function deleteStoredKey(): Promise<void> {
             <path d="M7 10h11l-3-3m3 3l-3 3M17 14H6l3 3m-3-3l3-3" />
           </svg>
         </button>
-        <label>
+        <label class="locale-field">
           <span class="sr-only">Target language</span>
-          <input
-            v-model="targetLanguage"
-            list="translify-target-languages"
-            aria-label="Target language"
-          />
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
+          </svg>
+          <select v-model="targetLanguage" aria-label="Target language">
+            <option v-for="language in languageOptions" :key="language.code" :value="language.code">
+              {{ language.label }}
+            </option>
+          </select>
         </label>
-        <datalist id="translify-source-languages">
-          <option v-for="language in commonLanguages" :key="language[0]" :value="language[0]">
-            {{ languageLabel(language[0]) }}
-          </option>
-        </datalist>
-        <datalist id="translify-target-languages">
-          <option
-            v-for="language in commonLanguages.slice(1)"
-            :key="language[0]"
-            :value="language[0]"
-          >
-            {{ languageLabel(language[0]) }}
-          </option>
-        </datalist>
       </div>
 
       <div class="translation-grid">
@@ -564,21 +562,60 @@ svg {
   overflow: hidden;
   background: var(--vp-c-bg);
 }
-.language-bar {
+.locale-bar {
   display: grid;
   grid-template-columns: 1fr 48px 1fr;
   align-items: center;
   border-bottom: 1px solid var(--vp-c-divider);
 }
-.language-bar label {
-  padding: 10px 16px;
+.locale-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 58px;
+  min-width: 0;
+  padding: 0 16px;
 }
-.language-bar input {
+.locale-field > svg {
+  position: absolute;
+  left: 18px;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  color: var(--vp-c-text-3);
+}
+.locale-field::after {
+  content: '';
+  position: absolute;
+  right: 20px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  pointer-events: none;
+  color: var(--vp-c-text-3);
+}
+.locale-field select {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  padding: 0 30px 0 29px;
   border: 0;
   background: transparent;
-  box-shadow: none;
   color: var(--vp-c-brand-1);
+  outline: none;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: inherit;
   font-weight: 700;
+}
+.locale-field:focus-within {
+  background: var(--vp-c-bg-soft);
 }
 .swap-button {
   width: 40px;
@@ -767,11 +804,23 @@ textarea {
     align-items: flex-start;
     flex-direction: column;
   }
-  .language-bar {
+  .locale-bar {
     grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr);
   }
-  .language-bar label {
-    padding: 8px 6px;
+  .locale-field {
+    height: 52px;
+    padding: 0 4px;
+  }
+  .locale-field > svg {
+    left: 7px;
+  }
+  .locale-field::after {
+    right: 9px;
+  }
+  .locale-field select {
+    padding-right: 20px;
+    padding-left: 25px;
+    font-size: 0.78rem;
   }
   .usage-grid {
     grid-template-columns: 1fr;

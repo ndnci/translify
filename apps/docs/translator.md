@@ -19,6 +19,10 @@ The playground starts with `deepseek/deepseek-v4-flash`, Translify's recommended
 low-cost OpenRouter model. You can replace the slug with any model available to
 your OpenRouter account.
 
+The language selectors reuse Translify's complete bundled language registry.
+They show each language's native name, international name, and code while
+sending an unambiguous language name to the translation provider.
+
 ## How the serverless version works
 
 GitHub Pages only hosts the static HTML, CSS and JavaScript. The browser sends

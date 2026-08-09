@@ -7,6 +7,7 @@ import {
   getCountry,
   getCountryWithLanguages,
   getLanguage,
+  getLanguageOptions,
 } from '../locales-entry.js';
 
 describe('built-in world locale data', () => {
@@ -58,5 +59,17 @@ describe('built-in world locale data', () => {
     expect(getCountry('USA')?.code.alpha2).toBe('US');
     expect(getCountry('840')?.code.alpha2).toBe('US');
     expect(getLanguage('eng')).toBe(getLanguage('en'));
+  });
+
+  it('builds reusable, human-readable language selector options', () => {
+    const options = getLanguageOptions({ preferred: ['fr', 'en', 'tly'] });
+
+    expect(options[0]).toMatchObject({ code: 'fr', nativeName: 'français', name: 'French' });
+    expect(options[0]?.label).toContain('Français');
+    expect(options[0]?.label).toContain('(fr)');
+    expect(options[1]?.code).toBe('en');
+    expect(options[2]?.code).toBe('tly');
+    expect(new Set(options.map((option) => option.code)).size).toBe(options.length);
+    expect(options.length).toBeGreaterThan(7_000);
   });
 });

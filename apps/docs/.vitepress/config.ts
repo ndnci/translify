@@ -10,7 +10,7 @@ export default defineConfig({
   base: '/translify/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/png', href: '/logo.png' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/translify/logo.png' }],
     ['meta', { name: 'og:type', content: 'website' }],
     ['meta', { name: 'og:title', content: 'Translify' }],
     ['meta', { name: 'og:description', content: 'Intelligent i18n CLI for modern web apps' }],

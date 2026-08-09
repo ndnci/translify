@@ -30,6 +30,20 @@ export interface LanguageInfo {
   territories: string[];
 }
 
+export interface LanguageOption {
+  code: string;
+  name: string;
+  nativeName: string;
+  label: string;
+  direction: TextDirection;
+  type: LanguageType;
+}
+
+export interface GetLanguageOptionsOptions {
+  /** Codes pinned to the beginning, in the supplied order. */
+  preferred?: readonly string[];
+}
+
 export interface CountryLanguage {
   /** Preferred BCP 47/ISO code (ISO 639-1 when one exists, otherwise ISO 639-3). */
   code: string;

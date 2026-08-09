@@ -23,6 +23,8 @@
     adapters with optional framework peer dependencies.
   - Centralize application runtime defaults and optional bundled messages in
     `translify.config`, with per-key overrides and an explicit opt-out.
+  - Export reusable language selector options and use them in the browser
+    translator with native names, international names, and codes.
 
 ### Patch Changes
 
