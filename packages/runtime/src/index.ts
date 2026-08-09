@@ -1,5 +1,6 @@
 export { createI18n, createI18nFromConfig } from './runtime.js';
 export { canonicalizeLocale, detectLocale, matchSupportedLocale } from './locale.js';
+export { createI18nRouter } from './routing.js';
 export {
   TranslifyRuntimeError,
   type CatalogMessages,
@@ -7,6 +8,7 @@ export {
   type CreateNextI18nOptions,
   type GetTranslationsOptions,
   type I18n,
+  type I18nRouter,
   type I18nProviderConfig,
   type MessageCatalog,
   type MessageKeys,
@@ -17,6 +19,14 @@ export {
   type NextClientConfig,
   type NextI18n,
   type RuntimeErrorCode,
+  type AlternateLink,
+  type LocaleCookieConfig,
+  type LocalePrefix,
+  type LocalizedPathname,
+  type ResolvedRoute,
+  type RoutingConfig,
+  type RoutingResolveOptions,
+  type TrailingSlash,
   type TranslationValue,
   type TranslationValues,
   type Translator,

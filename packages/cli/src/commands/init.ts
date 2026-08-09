@@ -33,6 +33,24 @@ export default {
     },
   },
 
+  routing: {
+    locales: ['en'],
+    locale_prefix: 'as-needed', // 'always', 'as-needed', or 'never'
+    locale_detection: true,
+    locale_cookie: {
+      name: 'translify_locale',
+      max_age: 31536000,
+      same_site: 'lax',
+      secure: false,
+    },
+    pathnames: {
+      // '/about': { en: '/about', fr: '/a-propos' },
+      // '/blog/[slug]': { en: '/blog/[slug]', fr: '/actualites/[slug]' },
+    },
+    base_path: '',
+    trailing_slash: 'preserve',
+  },
+
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
     // Also recognizes your own custom wrapper hooks around useTranslations/

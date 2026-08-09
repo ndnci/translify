@@ -106,6 +106,27 @@ describe('validateConfig', () => {
     expect(config.translations.split.groups).toHaveLength(2);
   });
 
+  it('defaults and validates centralized URL routing options', () => {
+    const config = validateConfig({
+      translations: { default_language: 'en' },
+      routing: {
+        locales: ['en', 'fr'],
+        locale_prefix: 'as-needed',
+        locale_detection: true,
+        pathnames: {
+          '/about': { en: '/about', fr: '/a-propos' },
+        },
+      },
+    });
+
+    expect(config.routing.locale_prefix).toBe('as-needed');
+    expect(config.routing.locale_cookie).not.toBe(false);
+    if (config.routing.locale_cookie) {
+      expect(config.routing.locale_cookie.name).toBe('translify_locale');
+    }
+    expect(config.routing.pathnames['/about']).toEqual({ en: '/about', fr: '/a-propos' });
+  });
+
   it('loads .env files before evaluating config process.env references', async () => {
     const cwd = mkdtempSync(join(tmpdir(), 'translify-env-'));
     const envKey = 'TRANSLIFY_TEST_OPENAI_API_KEY';

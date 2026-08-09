@@ -14,6 +14,9 @@
   - Add framework-agnostic, React, and Next.js application runtimes with ICU
     messages, locale fallback, SSR-safe formatting, and request-isolated server
     helpers.
+  - Add framework-independent localized URL routing with configurable locale
+    prefixes, translated pathnames, language negotiation, preference cookies,
+    locale switching, and SEO alternate links.
 
 ### Patch Changes
 

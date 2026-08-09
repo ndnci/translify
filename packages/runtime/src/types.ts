@@ -101,6 +101,55 @@ export interface TranslifyConfigLike {
   translations: {
     default_language: string;
   };
+  routing?: RoutingConfig;
+}
+
+export type LocalePrefix = 'always' | 'as-needed' | 'never';
+export type TrailingSlash = 'preserve' | 'always' | 'never';
+export type LocalizedPathname = string | Readonly<Record<string, string>>;
+
+export interface LocaleCookieConfig {
+  name?: string;
+  max_age?: number;
+  same_site?: 'lax' | 'strict' | 'none';
+  secure?: boolean;
+}
+
+export interface RoutingConfig {
+  locales: readonly string[];
+  locale_prefix?: LocalePrefix;
+  locale_detection?: boolean;
+  locale_cookie?: false | LocaleCookieConfig;
+  pathnames?: Readonly<Record<string, LocalizedPathname>>;
+  base_path?: string;
+  trailing_slash?: TrailingSlash;
+}
+
+export interface RoutingResolveOptions {
+  headers?: Headers | Readonly<Record<string, string | undefined>>;
+}
+
+export interface ResolvedRoute<Locale extends string = string> {
+  locale: Locale;
+  pathname: string;
+  localizedPathname: string;
+  params: Readonly<Record<string, string>>;
+  redirect?: string;
+  localeCookie?: string;
+}
+
+export interface AlternateLink {
+  locale: string;
+  href: string;
+}
+
+export interface I18nRouter<Locale extends string = string> {
+  readonly locales: readonly Locale[];
+  readonly defaultLocale: Locale;
+  href(pathname: string, locale?: Locale): string;
+  resolve(input: string | URL | Request, options?: RoutingResolveOptions): ResolvedRoute<Locale>;
+  switchLocale(input: string | URL, locale: Locale): string;
+  alternates(pathname: string, origin?: string): AlternateLink[];
 }
 
 export type I18nProviderConfig =

@@ -159,6 +159,15 @@ export default {
     },
   },
 
+  routing: {
+    locales: ['en', 'fr'],
+    locale_prefix: 'as-needed',
+    locale_detection: true,
+    pathnames: {
+      '/about': { en: '/about', fr: '/a-propos' },
+    },
+  },
+
   extraction: {
     translation_functions: ['t', 'i18n.t', 'translate'],
     namespace_functions: ['useTranslations', 'getTranslations'],
@@ -222,21 +231,22 @@ export default {
 
 ## Framework Support
 
-| Framework / Library | Status       |
-| ------------------- | ------------ |
-| React               | ✅ Supported |
-| Next.js             | ✅ Supported |
-| TypeScript          | ✅ Supported |
-| JavaScript          | ✅ Supported |
-| VanillaJS runtime   | ✅ Supported |
-| i18next             | ✅ Supported |
-| next-intl           | ✅ Supported |
-| Vite adapter        | 🔜 Planned   |
-| Vue                 | 🔜 Planned   |
-| Angular             | 🔜 Planned   |
-| Svelte              | 🔜 Planned   |
-| Symfony             | 🔜 Planned   |
-| Laravel / PHP       | 🔜 Planned   |
+| Framework / Library   | Status       |
+| --------------------- | ------------ |
+| React                 | ✅ Supported |
+| Next.js               | ✅ Supported |
+| TypeScript            | ✅ Supported |
+| JavaScript            | ✅ Supported |
+| VanillaJS runtime     | ✅ Supported |
+| i18next               | ✅ Supported |
+| next-intl             | ✅ Supported |
+| Localized URL routing | ✅ Supported |
+| Vite adapter          | 🔜 Planned   |
+| Vue                   | 🔜 Planned   |
+| Angular               | 🔜 Planned   |
+| Svelte                | 🔜 Planned   |
+| Symfony               | 🔜 Planned   |
+| Laravel / PHP         | 🔜 Planned   |
 
 ---
 

@@ -54,6 +54,46 @@ If your `translify.config` is browser-safe,
 directly so it is not repeated. Do not import a config containing server-only
 environment variables into a client bundle.
 
+## Localized URLs
+
+URL behavior lives in `translify.config.ts`, next to the catalogue settings.
+`locale_prefix` accepts `always`, `as-needed`, or `never`; automatic detection
+can be disabled independently. Public pathnames can translate static segments
+without changing dynamic parameter names.
+
+```ts
+import { createI18nRouter } from '@ndnci/translify/vanilla';
+import config from '../../translify.config';
+
+export const routing = createI18nRouter(config);
+
+routing.href('/about', 'fr'); // /fr/a-propos
+routing.href('/blog/hello?from=home', 'fr');
+// /fr/actualites/hello?from=home
+
+routing.switchLocale('/fr/actualites/hello', 'en'); // /blog/hello
+```
+
+On the server, `routing.resolve(request)` gives one stable internal pathname,
+the locale, dynamic parameters, an optional canonical redirect, and an optional
+`Set-Cookie` value. It understands locale prefixes, translated paths, the
+configured preference cookie and weighted `Accept-Language` values. Use the same
+method in middleware for any framework:
+
+```ts
+const route = routing.resolve(request);
+
+if (route.redirect) {
+  return Response.redirect(route.redirect, 307);
+}
+
+// route.locale, route.pathname and route.params are safe for request handling.
+```
+
+`routing.alternates('/about', origin)` returns localized canonical URLs plus an
+`x-default` entry for `hreflang` tags and sitemaps. Query strings, hashes, base
+paths and the configured trailing-slash policy are preserved.
+
 ## ICU messages
 
 Messages use standard ICU syntax:
@@ -164,8 +204,8 @@ export default async function Layout({ children }) {
 
 `resolveLocale` validates untrusted route parameters, `isLocale` is a TypeScript
 type guard, and `generateStaticParams()` returns every configured locale for
-SSG. URL middleware and locale-prefixed navigation remain explicit project
-choices rather than hidden runtime behavior.
+SSG. Use `createI18nRouter(config)` from the same `/next` entry point in the
+framework middleware; no second routing configuration is required.
 
 ## Missing messages and fallback
 

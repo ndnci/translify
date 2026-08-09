@@ -78,6 +78,36 @@ export default {
     },
   },
 
+  // ── Localized URLs ─────────────────────────────────────────────────────
+  routing: {
+    locales: ['en', 'fr'],
+
+    // 'always': /en/about and /fr/a-propos
+    // 'as-needed': /about and /fr/a-propos
+    // 'never': /about and /a-propos
+    locale_prefix: 'as-needed',
+
+    // Cookie first, then the HTTP Accept-Language header/browser preferences.
+    locale_detection: true,
+    locale_cookie: {
+      name: 'translify_locale',
+      max_age: 31536000,
+      same_site: 'lax',
+      secure: false,
+    },
+
+    // Dynamic parameters keep the same name in every locale.
+    pathnames: {
+      '/about': { en: '/about', fr: '/a-propos' },
+      '/blog/[slug]': {
+        en: '/blog/[slug]',
+        fr: '/actualites/[slug]',
+      },
+    },
+    base_path: '',
+    trailing_slash: 'preserve',
+  },
+
   // ── Extraction ──────────────────────────────────────────────────────────
   extraction: {
     // Function names/expressions to treat as translation calls
@@ -187,7 +217,8 @@ Example error:
 
 ## Runtime reuse
 
-The Next.js runtime reads `translations.default_language` from this same config
-through `createNextI18n`. The browser-safe `createI18nFromConfig` helper can do
-the same in Vanilla JavaScript when the config does not evaluate server-only
-environment variables. See the [Application Runtime](./runtime) guide.
+The application runtimes reuse `translations.default_language` and `routing`
+from this same file. Per-instance values are only overrides, so the project
+config remains the recommended source of truth. Do not import a config that
+reads private environment variables into a client bundle. See the
+[Application Runtime](./runtime) guide.

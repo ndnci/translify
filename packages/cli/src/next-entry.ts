@@ -1,4 +1,5 @@
 import { createNextI18n as createRuntimeNextI18n } from '@ndnci/translify-runtime/next';
+export { createI18nRouter } from '@ndnci/translify-runtime';
 import type {
   CreateNextI18nOptions,
   GetTranslationsOptions,

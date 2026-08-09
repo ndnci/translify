@@ -64,6 +64,39 @@ const TranslationsSchema = z
   })
   .strict();
 
+// ─── Runtime routing ─────────────────────────────────────────────────────────
+
+const LocaleCookieSchema = z
+  .object({
+    /** Cookie used to remember an explicit locale choice. */
+    name: z.string().min(1).default('translify_locale'),
+    /** Cookie lifetime in seconds. Defaults to one year. */
+    max_age: z.number().int().positive().default(31_536_000),
+    same_site: z.enum(['lax', 'strict', 'none']).default('lax'),
+    secure: z.boolean().default(false),
+  })
+  .strict();
+
+const LocalizedPathnameSchema = z.union([z.string(), z.record(z.string())]);
+
+const RoutingSchema = z
+  .object({
+    /** BCP 47 locales exposed by the application runtime. */
+    locales: z.array(z.string().min(1)).default([]),
+    /** Whether locale segments are always, selectively, or never included in URLs. */
+    locale_prefix: z.enum(['always', 'as-needed', 'never']).default('as-needed'),
+    /** Detect locale from the preference cookie and Accept-Language header. */
+    locale_detection: z.boolean().default(true),
+    /** Set to false to avoid reading or recommending a locale cookie. */
+    locale_cookie: z.union([z.literal(false), LocaleCookieSchema]).default({}),
+    /** Internal pathname mapped to one common or several localized public paths. */
+    pathnames: z.record(LocalizedPathnameSchema).default({}),
+    /** Optional application base path, for example `/shop`. */
+    base_path: z.string().default(''),
+    trailing_slash: z.enum(['preserve', 'always', 'never']).default('preserve'),
+  })
+  .strict();
+
 // ─── Extraction ────────────────────────────────────────────────────────────────
 
 const ExtractionSchema = z
@@ -189,6 +222,7 @@ export const TranslifyConfigSchema = z
   .object({
     source: SourceSchema.default({}),
     translations: TranslationsSchema.default({}),
+    routing: RoutingSchema.default({}),
     extraction: ExtractionSchema.default({}),
     detection: DetectionSchema.default({}),
     ai_translation: AITranslationSchema.default({}),

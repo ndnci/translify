@@ -9,6 +9,15 @@ export default {
     files: ['messages/**/*.json'],
   },
 
+  routing: {
+    locales: ['en', 'fr'],
+    locale_prefix: 'as-needed',
+    locale_detection: true,
+    pathnames: {
+      '/': '/',
+    },
+  },
+
   extraction: {
     translation_functions: ['t', 'useTranslations'],
     ignored_words: ['OK', 'API'],
